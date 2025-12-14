@@ -45,7 +45,7 @@ const Map = ({
   }, []);
 
   return (
-    <div ref={mapContainerRef} style={style} className={containerClass}>
+    <div ref={mapContainerRef} style={style} className={containerClass} >
       {mapInstance && <MapProvider value={mapInstance}>{children}</MapProvider>}
     </div>
   );

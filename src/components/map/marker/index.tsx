@@ -40,6 +40,7 @@ const InfoCardOverlay = ({ position, children }: InfoCardProps) => {
         left: overlayPosition.x,
         top: overlayPosition.y,
         transform: 'translate(-50%, -100%)',
+        zIndex: 999,
       }}
     >
       <div>
