@@ -14,6 +14,8 @@ interface MainMapProps {
   open: boolean;
   handleClick: () => void;
   onMapLoad: (map: any) => void;
+  boundary?: any;
+  layerType?: 'country' | 'state' | 'postal-code';
 }
 
 const buildFeature = (item: any) => {
@@ -37,39 +39,79 @@ const MainMap = ({
   className,
   open,
   onMapLoad,
+  layerType = 'postal-code',
 }: MainMapProps) => {
-  const renderLayers = useMemo(() => {
-    return items?.map((item) => {
-      if (!item.geom_simplified) return;
-      const feature = buildFeature(item);
-      return (
-        <React.Fragment key={item.id}>
-          <Layer
-            key={`fill-${item.id}`}
-            id={`postal-code-layer-${item.id}`}
-            source={`postal-code-layer-${item.id}`}
-            geoJsonData={feature}
-            type="fill"
-            paint={{
-              "fill-color": "#f00",
-              "fill-opacity": 0.4,
-            }}
-          />
-          <Layer
-            key={`line-${item.id}`}
-            id={`postal-code-border-${item.id}`}
-            source={`postal-code-layer-${item.id}`}
-            geoJsonData={feature}
-            type="line"
-            paint={{
-              "line-color": "#000",
-              "line-width": 1,
-            }}
-          />
-        </React.Fragment>
-      );
-    });
+
+  const geoJsonData = useMemo(() => {
+    if (!items || items.length === 0) return null;
+
+    const features = items
+      .filter((item) => item.geom_simplified)
+      .map((item) => {
+        const geom = typeof item.geom_simplified === 'string'
+          ? JSON.parse(item.geom_simplified)
+          : item.geom_simplified;
+
+        return {
+          type: "Feature",
+          properties: item,
+          geometry: geom,
+        };
+      });
+
+    return {
+      type: "FeatureCollection",
+      features,
+    };
   }, [items]);
+
+  const renderLayers = useMemo(() => {
+    if (!geoJsonData) return null;
+
+    const sourceId = `${layerType}-source`;
+    const layerId = `${layerType}-layer`;
+    const borderId = `${layerType}-border`;
+
+    return (
+      <React.Fragment key={layerType}>
+        <Layer
+          id={layerId}
+          source={sourceId}
+          geoJsonData={geoJsonData}
+          type="fill"
+          paint={{
+            "fill-color": layerType === 'country' ? "#0f0" : layerType === 'state' ? "#00f" : "#f00",
+            "fill-opacity": 0.4,
+          }}
+        />
+        <Layer
+          id={borderId}
+          source={sourceId}
+          geoJsonData={geoJsonData}
+          type="line"
+          paint={{
+            "line-color": "#000",
+            "line-width": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              7, 0.2,
+              10, 0.5,
+              12, 1
+            ],
+            "line-opacity": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              7, 0.5,
+              10, 0.8,
+              12, 1
+            ]
+          }}
+        />
+      </React.Fragment>
+    );
+  }, [geoJsonData, layerType]);
 
   return (
     <div
