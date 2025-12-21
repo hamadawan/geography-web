@@ -1,5 +1,6 @@
 "use client"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
 import { useMap } from '../context';
 import { LayerSpecification, GeoJSONSource } from 'maplibre-gl';

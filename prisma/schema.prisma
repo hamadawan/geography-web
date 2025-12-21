@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PostalCode {
+  id              Int                      @id @default(autoincrement())
+  code            String                   @db.VarChar(10)
+  country_code    String                   @db.VarChar(2)
+  geom            Unsupported("geometry")?
+  land_area       Decimal?                 @db.Decimal(18, 4)
+  geom_simplified Unsupported("geometry")?
+  physical_state  String?
+  physical_city   String?
+
+  @@unique([code, country_code], map: "code_country_unique")
+  @@index([code], map: "idx_code")
+  @@index([code, country_code], map: "idx_code_country")
+  @@map("postal_code")
+}
+
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+model states {
+  id              Int                      @id(map: "fsa_state_pkey") @default(autoincrement())
+  region          String?                  @db.VarChar(2)
+  division        String?                  @db.VarChar(2)
+  statefp         String?                  @db.VarChar(2)
+  statens         String?                  @db.VarChar(8)
+  geoid           String?                  @db.VarChar(2)
+  geoidfq         String?                  @db.VarChar(11)
+  code            String?                  @db.VarChar(2)
+  name            String?                  @db.VarChar(100)
+  lsad            String?                  @db.VarChar(2)
+  mtfcc           String?                  @db.VarChar(5)
+  funcstat        String?                  @db.VarChar(1)
+  aland           Decimal?                 @db.Decimal(14, 0)
+  awater          Decimal?                 @db.Decimal(14, 0)
+  intptlat        String?                  @db.VarChar(11)
+  intptlon        String?                  @db.VarChar(12)
+  geom            Unsupported("geometry")?
+  geom_simplified Unsupported("geometry")?
+  country_code    String                   @default("US") @db.VarChar(2)
+
+  @@index([geom], map: "fsa_state_geom_geom_idx", type: Gist)
+  @@index([country_code], map: "idx_country_code")
+  @@index([country_code, code], map: "idx_country_code_code")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model area_data {
+  area_name          String?
+  area_code          String?
+  district_name      String?
+  district_no        String?
+  delivery_zipcode   String?
+  locale_name        String?
+  physical_delv_addr String?
+  physical_city      String?
+  physical_state     String?
+  physical_zip       String?
+  physical_zip_4     String?
+
+  @@ignore
+}
+
+model Country {
+  id              Int                      @id @default(autoincrement())
+  code            String                   @unique @db.VarChar(2)
+  name            String                   @db.VarChar(100)
+  geom            Unsupported("geometry")?
+  geom_simplified Unsupported("geometry")?
+
+  @@map("country")
+}

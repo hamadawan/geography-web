@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import LocationCard from "../location-card";
 import { ScrollArea } from "@/components/ui/scroll-area";

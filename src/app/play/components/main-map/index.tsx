@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useMemo } from "react";
@@ -18,19 +19,6 @@ interface MainMapProps {
   layerType?: 'country' | 'state' | 'postal-code';
 }
 
-const buildFeature = (item: any) => {
-  const { geom_simplified: geom, ...rest } = item;
-  return {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: rest,
-        geometry: typeof geom === 'string' ? JSON.parse(geom) : geom,
-      },
-    ],
-  };
-};
 
 const MainMap = ({
   handleClick,
@@ -80,8 +68,8 @@ const MainMap = ({
           geoJsonData={geoJsonData}
           type="fill"
           paint={{
-            "fill-color": layerType === 'country' ? "#0f0" : layerType === 'state' ? "#00f" : "#f00",
-            "fill-opacity": 0.4,
+            "fill-color": layerType === 'country' ? "#3b82f6" : layerType === 'state' ? "#10b981" : "#f59e0b",
+            "fill-opacity": 0.3,
           }}
         />
         <Layer
@@ -120,8 +108,8 @@ const MainMap = ({
     >
       <Map
         containerClass={"h-screen w-100 relative"}
-        zoom={7}
-        center={[-53, 48]}
+        zoom={4}
+        center={[-97.6, 38.3]}
         onLoad={onMapLoad}
       >
         {loading && <Loading />}
