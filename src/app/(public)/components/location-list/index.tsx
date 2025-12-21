@@ -31,29 +31,19 @@ export default function LocationList({
     // Use pre-calculated bounding box if available
     if (item.bbox && Array.isArray(item.bbox) && item.bbox.length === 4) {
       const [minLon, minLat, maxLon, maxLat] = item.bbox;
-      const centerLon = (minLon + maxLon) / 2;
-      const centerLat = (minLat + maxLat) / 2;
 
-      // Calculate appropriate zoom level based on bbox size
-      const lonDiff = maxLon - minLon;
-      const latDiff = maxLat - minLat;
-      const maxDiff = Math.max(lonDiff, latDiff);
-
-      // Smart zoom level calculation
-      let zoom = 10;
-      if (maxDiff > 20) zoom = 4;       // Large countries
-      else if (maxDiff > 10) zoom = 5;  // Medium countries
-      else if (maxDiff > 5) zoom = 6;   // Small countries / large states
-      else if (maxDiff > 2) zoom = 7;   // Medium states
-      else if (maxDiff > 1) zoom = 8;   // Small states
-      else if (maxDiff > 0.5) zoom = 9; // Large postal codes
-      else zoom = 10;                    // Small postal codes
-
-      mapInstance.flyTo({
-        center: [centerLon, centerLat],
-        zoom: zoom,
-        duration: 1000, // Smooth 1-second animation
-      });
+      // Use fitBounds to automatically calculate zoom level
+      mapInstance.fitBounds(
+        [
+          [minLon, minLat], // Southwest corner
+          [maxLon, maxLat]  // Northeast corner
+        ],
+        {
+          padding: 50,      // Add padding around the bounds
+          duration: 1000,   // Smooth 1-second animation
+          maxZoom: 15       // Don't zoom in too much for small areas
+        }
+      );
     }
 
     // Always call onItemClick to allow the parent to handle selection logic
