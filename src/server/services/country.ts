@@ -4,7 +4,7 @@ import prisma from '../db';
 
 export const findAll = async () => {
     const result: any[] = await prisma.$queryRaw`
-    SELECT id, code, name, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+    SELECT id, code, name, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
     FROM country 
     ORDER BY name`;
 
@@ -17,7 +17,7 @@ export const findAll = async () => {
 
 export const findOne = async (code: string) => {
     const result: any[] = await prisma.$queryRaw`
-    SELECT id, code, name, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+    SELECT id, code, name, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
     FROM country 
     WHERE code = ${code.toUpperCase()}`;
 

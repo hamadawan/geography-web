@@ -26,45 +26,37 @@ export default function LocationList({
   breadcrumbs
 }: LocationListProps) {
   const handleItemClick = (item: any) => {
-    // If it has geometry, it's a postal code (or leaf node), so fly to it
-    if (item.geom_simplified) {
-      if (!mapInstance) return;
-      const geom = typeof item.geom_simplified === 'string'
-        ? JSON.parse(item.geom_simplified)
-        : item.geom_simplified;
+    if (!mapInstance) return;
 
-      if (!geom || !geom.coordinates) return;
+    // Use pre-calculated bounding box if available
+    if (item.bbox && Array.isArray(item.bbox) && item.bbox.length === 4) {
+      const [minLon, minLat, maxLon, maxLat] = item.bbox;
+      const centerLon = (minLon + maxLon) / 2;
+      const centerLat = (minLat + maxLat) / 2;
 
-      // Simple bounding box calculation to find center
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      // Calculate appropriate zoom level based on bbox size
+      const lonDiff = maxLon - minLon;
+      const latDiff = maxLat - minLat;
+      const maxDiff = Math.max(lonDiff, latDiff);
 
-      const processCoords = (coords: any[]) => {
-        coords.forEach((coord) => {
-          if (Array.isArray(coord[0])) {
-            processCoords(coord);
-          } else {
-            const [x, y] = coord;
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
-        });
-      };
-
-      processCoords(geom.coordinates);
-
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
+      // Smart zoom level calculation
+      let zoom = 10;
+      if (maxDiff > 20) zoom = 4;       // Large countries
+      else if (maxDiff > 10) zoom = 5;  // Medium countries
+      else if (maxDiff > 5) zoom = 6;   // Small countries / large states
+      else if (maxDiff > 2) zoom = 7;   // Medium states
+      else if (maxDiff > 1) zoom = 8;   // Small states
+      else if (maxDiff > 0.5) zoom = 9; // Large postal codes
+      else zoom = 10;                    // Small postal codes
 
       mapInstance.flyTo({
-        center: [centerX, centerY],
-        zoom: 10,
+        center: [centerLon, centerLat],
+        zoom: zoom,
+        duration: 1000, // Smooth 1-second animation
       });
     }
 
     // Always call onItemClick to allow the parent to handle selection logic
-    // (e.g., switching from state to postal code level)
     onItemClick(item);
   };
 

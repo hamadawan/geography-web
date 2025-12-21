@@ -17,7 +17,7 @@ export const findAll = async (page: number = 1, limit: number = 100, countryCode
         : (Prisma as any).empty;
 
     const states: any[] = await prisma.$queryRaw`
-    SELECT id, code, country_code, name, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+    SELECT id, code, country_code, name, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
     FROM states
     ${whereClause}
     ORDER BY name
@@ -48,7 +48,7 @@ export const findAll = async (page: number = 1, limit: number = 100, countryCode
 
 export const findOne = async (code: string) => {
     const result: any[] = await prisma.$queryRaw`
-    SELECT id, code, country_code, name, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+    SELECT id, code, country_code, name, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
     FROM states
     WHERE code = ${code}`;
 

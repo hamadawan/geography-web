@@ -16,6 +16,7 @@ model PostalCode {
   geom_simplified Unsupported("geometry")?
   physical_state  String?
   physical_city   String?
+  bbox            Json?                    // [minLon, minLat, maxLon, maxLat]
 
   @@unique([code, country_code], map: "code_country_unique")
   @@index([code], map: "idx_code")
@@ -51,6 +52,7 @@ model states {
   geom            Unsupported("geometry")?
   geom_simplified Unsupported("geometry")?
   country_code    String                   @default("US") @db.VarChar(2)
+  bbox            Json?                    // [minLon, minLat, maxLon, maxLat]
 
   @@index([geom], map: "fsa_state_geom_geom_idx", type: Gist)
   @@index([country_code], map: "idx_country_code")
@@ -80,6 +82,7 @@ model Country {
   name            String                   @db.VarChar(100)
   geom            Unsupported("geometry")?
   geom_simplified Unsupported("geometry")?
+  bbox            Json?                    // [minLon, minLat, maxLon, maxLat]
 
   @@map("country")
 }
