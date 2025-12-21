@@ -1,6 +1,7 @@
 {
-  "name": "geography-web",
+  "name": "geocanvas",
   "version": "0.1.0",
+  "description": "Explore and visualize geographic boundaries - countries, states, and postal codes",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -7,6 +7,8 @@ import Layer from "@/components/map/layer";
 import Marker from "@/components/map/marker";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/loading";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SITE_CONFIG } from "@/lib/constants/site";
 
 interface MainMapProps {
   items: any[];
@@ -103,9 +105,25 @@ const MainMap = ({
 
   return (
     <div
-      className={`h-screen ml-auto ${className} transition-all ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:w-[calc(100vw-400px)] data-[state=closed]:w-screen overflow-hidden`}
+      className={`h-screen ml-auto ${className} relative transition-all ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:w-[calc(100vw-400px)] data-[state=closed]:w-screen overflow-hidden`}
       data-state={open ? "open" : "closed"}
     >
+      <Button
+        onClick={handleClick}
+        className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-50"
+      >
+        {open ? (
+          <>
+            {SITE_CONFIG.ui.fullView}
+            <ChevronRight className="h-4 w-4" />
+          </>
+        ) : (
+          <>
+            <ChevronLeft className="h-4 w-4" />
+            {SITE_CONFIG.ui.listView}
+          </>
+        )}
+      </Button>
       <Map
         containerClass={"h-screen w-100 relative"}
         zoom={4}
@@ -116,7 +134,6 @@ const MainMap = ({
         {renderLayers}
         <Marker position={[-97.8, 38.3]}>
           <div>
-            <Button onClick={handleClick}>Here</Button>
           </div>
         </Marker>
       </Map>

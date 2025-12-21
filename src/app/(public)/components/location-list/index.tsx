@@ -2,6 +2,7 @@
 import React from "react";
 import LocationCard from "../location-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SITE_CONFIG } from "@/lib/constants/site";
 
 interface Breadcrumb {
   label: string;
@@ -19,7 +20,6 @@ interface LocationListProps {
 
 export default function LocationList({
   open,
-  setOpen,
   items,
   mapInstance,
   onItemClick,
@@ -74,6 +74,7 @@ export default function LocationList({
         } fixed top-0 left-0 h-full bg-white shadow-lg transition-transform duration-500 ease-in-out w-[400px] z-50`}
     >
       <div className="p-4 border-b">
+        <h1 className="text-2xl font-bold pb-4">{SITE_CONFIG.name}</h1>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 flex-wrap">
             {breadcrumbs.map((crumb, index) => (
@@ -89,15 +90,11 @@ export default function LocationList({
               </React.Fragment>
             ))}
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="text-gray-500 hover:text-gray-800"
-          >
-            Close
-          </button>
         </div>
         <p className="text-sm text-gray-500">
-          Select a location to view on the map.
+          {breadcrumbs.length === 1 && SITE_CONFIG.ui.selectCountry}
+          {breadcrumbs.length === 2 && SITE_CONFIG.ui.selectState}
+          {breadcrumbs.length === 3 && SITE_CONFIG.ui.selectPostalCode}
         </p>
       </div>
       <ScrollArea className="h-[calc(100vh-76px)]">
