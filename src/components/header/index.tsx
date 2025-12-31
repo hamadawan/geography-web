@@ -8,32 +8,24 @@ import { CountrySelect } from "../country-select";
 import { StateSelect } from "../state-select";
 import { ZipcodeSelect } from "../zipcode-select";
 
-type Option = {
-  code: string;
-  name: string;
-};
+import { useSelectionStore } from "@/lib/store/selection-store";
 
 interface HeaderProps {
-  selectedCountry?: Option | null;
-  selectedState?: Option | null;
-  selectedZip?: Option | null;
-
-  onCountryChange: (country: Option | null) => void;
-  onStateChange: (state: Option | null) => void;
-  onZipChange: (zip: Option | null) => void;
-
   onExport?: () => void;
 }
 
 export default function Header({
-  selectedCountry,
-  selectedState,
-  selectedZip,
-  onCountryChange,
-  onStateChange,
-  onZipChange,
   onExport,
 }: HeaderProps) {
+  const {
+    selectedCountry,
+    selectedState,
+    selectedZip,
+    setSelectedCountry,
+    setSelectedState,
+    setSelectedZip,
+  } = useSelectionStore();
+
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4">
       {/* Logo */}
@@ -48,26 +40,19 @@ export default function Header({
       <div className="flex flex-1 items-center gap-3">
         <CountrySelect
           value={selectedCountry ?? undefined}
-          onChange={(country) => {
-            onCountryChange(country);
-            onStateChange(null);
-            onZipChange(null);
-          }}
+          onChange={setSelectedCountry}
         />
 
         <StateSelect
           countryCode={selectedCountry?.code}
           value={selectedState ?? undefined}
-          onChange={(state) => {
-            onStateChange(state);
-            onZipChange(null);
-          }}
+          onChange={setSelectedState}
         />
 
         <ZipcodeSelect
           stateCode={selectedState?.code}
           value={selectedZip ?? undefined}
-          onChange={onZipChange}
+          onChange={setSelectedZip}
         />
       </div>
 

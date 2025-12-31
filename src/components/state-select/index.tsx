@@ -18,11 +18,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useList as useStateList } from "@/lib/api-client/state"
+import { Option } from "@/lib/store/selection-store"
 
 interface Props {
   countryCode?: string
-  value?: any
-  onChange: (state: any) => void
+  value?: Option | null
+  onChange: (state: Option | null) => void
 }
 
 export function StateSelect({ countryCode, value, onChange }: Props) {
@@ -77,7 +78,7 @@ export function StateSelect({ countryCode, value, onChange }: Props) {
                 />
                 All States
               </CommandItem>
-              {states.map((state: any) => (
+              {states.map((state: Option) => (
                 <CommandItem
                   key={state.code}
                   value={state.name}

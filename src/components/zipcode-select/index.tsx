@@ -18,11 +18,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useList as usePostalCodeList } from "@/lib/api-client/postal-code"
+import { Option } from "@/lib/store/selection-store"
 
 interface Props {
   stateCode?: string
-  value?: any
-  onChange: (zip: any) => void
+  value?: Option | null
+  onChange: (zip: Option | null) => void
 }
 
 export function ZipcodeSelect({ stateCode, value, onChange }: Props) {
@@ -86,7 +87,7 @@ export function ZipcodeSelect({ stateCode, value, onChange }: Props) {
                 />
                 All Zipcodes
               </CommandItem>
-              {zipcodes.map((zip: any) => (
+              {zipcodes.map((zip: Option) => (
                 <CommandItem
                   key={zip.code}
                   value={zip.code}

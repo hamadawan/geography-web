@@ -6,13 +6,18 @@ import { useList as usePostalCodeList } from "@/lib/api-client/postal-code";
 import { useList as useStateList } from "@/lib/api-client/state";
 import { useList as useCountryList } from "@/lib/api-client/country";
 import Header from "@/components/header";
+import LayerSidebar from "./components/layer-sidebar";
+import StylingSidebar from "./components/styling-sidebar";
+import { useSelectionStore } from "@/lib/store/selection-store";
+import maplibre from "maplibre-gl";
 
 const App = () => {
-  const [open, setOpen] = useState(true);
-  const [mapInstance, setMapInstance] = useState<any>(null);
-  const [selectedCountry, setSelectedCountry] = useState<any>(null);
-  const [selectedState, setSelectedState] = useState<any>(null);
-  const [selectedZip, setSelectedZip] = useState<any>(null);
+  const [mapInstance, setMapInstance] = useState<maplibre.Map | null>(null);
+  const {
+    selectedCountry,
+    selectedState,
+    selectedZip,
+  } = useSelectionStore();
 
   const { data: countriesData, isLoading: isCountriesLoading } = useCountryList({
     paginate: false,
@@ -67,7 +72,7 @@ const App = () => {
   useEffect(() => {
     if (mapInstance && targetBbox) {
       try {
-        mapInstance.fitBounds(targetBbox, {
+        mapInstance.fitBounds(targetBbox as [number, number, number, number], {
           padding: 50,
           duration: 1000,
           essential: true,
@@ -80,35 +85,40 @@ const App = () => {
 
   const layerType = useMemo(() => {
     if (!selectedCountry || selectedCountry.code === "all") {
+      return "all-countries";
+    }
+    if (!selectedState) {
       return "country";
     }
-    if (!selectedState || selectedState.code === "all") {
+    if (selectedState.code === "all") {
+      return "all-states";
+    }
+    if (!selectedZip) {
       return "state";
     }
-    return "postal-code";
-  }, [selectedCountry, selectedState]);
+    if (selectedZip.code === "all") {
+      return "all-zipcodes";
+    }
+    return "zipcode";
+  }, [selectedCountry, selectedState, selectedZip]);
 
   return (
-    <main>
+    <main className="flex flex-col h-screen overflow-hidden">
       <Header
-        selectedCountry={selectedCountry}
-        selectedState={selectedState}
-        selectedZip={selectedZip}
-        onCountryChange={setSelectedCountry}
-        onStateChange={setSelectedState}
-        onZipChange={setSelectedZip}
         onExport={() => {
           console.log("Export clicked");
         }}
       />
-      <MainMap
-        items={currentItems}
-        loading={isCountriesLoading || isStatesLoading || isPostalCodesLoading}
-        open={open}
-        handleClick={() => setOpen(!open)}
-        onMapLoad={setMapInstance}
-        layerType={layerType}
-      />
+      <div className="flex flex-1 overflow-hidden">
+        <LayerSidebar />
+        <StylingSidebar />
+        <MainMap
+          items={currentItems}
+          loading={isCountriesLoading || isStatesLoading || isPostalCodesLoading}
+          onMapLoad={setMapInstance}
+          layerType={layerType}
+        />
+      </div>
     </main>
   );
 };

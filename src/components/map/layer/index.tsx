@@ -1,36 +1,58 @@
 "use client"
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
 import { useMap } from '../context';
-import { LayerSpecification, GeoJSONSource } from 'maplibre-gl';
+import { LayerSpecification, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 
 type LayerProps = LayerSpecification & {
-  geoJsonData: any,
-  source: any
+  geoJsonData: unknown,
+  source: string,
+  onClick?: (e: MapLayerMouseEvent) => void
 }
 
-const Layer = ({ id, geoJsonData, source, paint, type }: LayerProps) => {
+const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) => {
   const map = useMap();
 
   useEffect(() => {
-    if (!map) return;
-    const sourceExists = map.getSource(source);
-    if (sourceExists) {
-      const geoJsonSource = map.getSource(source) as GeoJSONSource;
-      geoJsonSource.setData(geoJsonData);
-    } else {
+    if (!map || !source) return;
+
+    if (!map.getSource(source)) {
       map.addSource(source, {
         type: 'geojson',
-        data: geoJsonData,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: geoJsonData as any,
       });
     }
 
+    return () => {
+      if (map.getSource(source)) {
+        // Only remove if no other layers are using it
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const layersUsingSource = map.getStyle().layers?.filter((l) => (l as any).source === source) || [];
+        if (layersUsingSource.length === 0) {
+          map.removeSource(source);
+        }
+      }
+    };
+  }, [map, source, geoJsonData]);
+
+  useEffect(() => {
+    if (!map || !source || !geoJsonData) return;
+    const existingSource = map.getSource(source) as GeoJSONSource;
+    if (existingSource) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      existingSource.setData(geoJsonData as any);
+    }
+  }, [map, source, geoJsonData]);
+
+  useEffect(() => {
+    if (!map || !id || !source) return;
+
     if (!map.getLayer(id)) {
       map.addLayer({
-        id: id,
-        type: type,
-        source: source,
+        id,
+        type,
+        source,
         paint,
       } as LayerSpecification);
     }
@@ -39,11 +61,42 @@ const Layer = ({ id, geoJsonData, source, paint, type }: LayerProps) => {
       if (map.getLayer(id)) {
         map.removeLayer(id);
       }
-      if (map.getSource(source) && !map.getStyle().layers.some((l: any) => l.source === source && l.id !== id)) {
-        map.removeSource(source);
+    };
+  }, [map, id, source, type, paint]);
+
+  // Layer property updates
+  useEffect(() => {
+    if (!map || !id || !map.getLayer(id)) return;
+    if (paint) {
+      Object.entries(paint).forEach(([key, value]) => {
+        map.setPaintProperty(id, key, value);
+      });
+    }
+  }, [map, id, paint]);
+
+  // Event management
+  useEffect(() => {
+    if (!map || !id || !onClick) return;
+
+    const handleClick = (e: MapLayerMouseEvent) => {
+      onClick(e);
+    };
+
+    map.on('click', id, handleClick);
+    map.on('mouseenter', id, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', id, () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    return () => {
+      map.off('click', id, handleClick);
+      if (map.getCanvas()) {
+        map.getCanvas().style.cursor = '';
       }
     };
-  }, [map, geoJsonData, paint, source, type, id]);
+  }, [map, id, onClick]);
 
   return null;
 };

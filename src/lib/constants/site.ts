@@ -51,8 +51,8 @@ export const SITE_CONFIG = {
         selectCountry: "Select a country to view on the map.",
         selectState: "Select a state to view on the map.",
         selectPostalCode: "Select a postal code to view on the map.",
-        fullView: "Full View",
-        listView: "List View",
+        showLayers: "Show Map Layers",
+        hideLayers: "Hide Map Layers",
         breadcrumbs: {
             countries: "Countries"
         }

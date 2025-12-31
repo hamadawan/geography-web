@@ -34,7 +34,8 @@
     "server-only": "^0.0.1",
     "shadcn-ui": "^0.9.3",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.14",

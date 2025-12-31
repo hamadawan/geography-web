@@ -26,8 +26,10 @@ const Map = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<maplibre.Map | null>(null);
 
+  const mapRef = useRef<maplibre.Map | null>(null);
+
   useEffect(() => {
-    if (mapContainerRef.current && !mapInstance) {
+    if (mapContainerRef.current && !mapRef.current) {
       const map = new maplibre.Map({
         container: mapContainerRef.current,
         style: mapStyle,
@@ -37,12 +39,17 @@ const Map = ({
       });
 
       map.on('style.load', () => {
+        mapRef.current = map;
         setMapInstance(map);
         if (onLoad) onLoad(map);
       });
-      return () => map.remove();
+
+      return () => {
+        map.remove();
+        mapRef.current = null;
+      };
     }
-  }, []);
+  }, [mapStyle, center, zoom, onLoad]);
 
   return (
     <div ref={mapContainerRef} style={style} className={containerClass} >

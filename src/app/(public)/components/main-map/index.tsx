@@ -10,30 +10,32 @@ import Loading from "@/components/loading";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/constants/site";
 
+import { useLayerStore } from "@/lib/store/layer-store";
+
 interface MainMapProps {
-  items: any[];
-  loading: boolean;
+  items: any[] | null;
+  loading?: boolean;
   className?: string;
-  open: boolean;
-  handleClick: () => void;
-  onMapLoad: (map: any) => void;
-  boundary?: any;
-  layerType?: 'country' | 'state' | 'postal-code';
+  onMapLoad?: (map: any) => void;
+  layerType?: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
 }
 
 
 const MainMap = ({
-  handleClick,
   items,
   loading,
-  className,
-  open,
+  className = "",
   onMapLoad,
-  layerType = 'postal-code',
+  layerType = 'all-countries',
 }: MainMapProps) => {
+  const { layers, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer, selectedLayerId } = useLayerStore();
 
   const geoJsonData = useMemo(() => {
     if (!items || items.length === 0) return null;
+
+    const baseType = layerType.startsWith('all-')
+      ? layerType.slice(4).replace(/ies$/, 'y').replace(/s$/, '')
+      : layerType;
 
     const features = items
       .filter((item) => item.geom_simplified)
@@ -42,9 +44,15 @@ const MainMap = ({
           ? JSON.parse(item.geom_simplified)
           : item.geom_simplified;
 
+        const entityId = `${baseType}:${item.country_code ? item.country_code + ':' : ''}${item.code}`;
+
         return {
           type: "Feature",
-          properties: item,
+          properties: {
+            ...item,
+            entityId,
+            savedLayerType: baseType,
+          },
           geometry: geom,
         };
       });
@@ -53,73 +61,149 @@ const MainMap = ({
       type: "FeatureCollection",
       features,
     };
-  }, [items]);
+  }, [items, layerType]);
 
-  const renderLayers = useMemo(() => {
+  const layersRef = React.useRef(layers);
+  React.useEffect(() => {
+    layersRef.current = layers;
+  }, [layers]);
+
+  const handleMapClick = React.useCallback((e: any) => {
+    if (!geoJsonData) return;
+    if (e.features && e.features.length > 0) {
+      const clickedFeature = e.features[0];
+      const entityId = clickedFeature.properties.entityId;
+
+      // Check if layer already exists for this entity
+      const existingLayer = layersRef.current.find(l => l.entityId === entityId);
+      if (existingLayer) {
+        setSelectedLayer(existingLayer.id);
+        if (!isSidebarOpen) toggleSidebar();
+        return;
+      }
+
+      // Gather all features belonging to this entity
+      const entityFeatures = geoJsonData.features.filter(
+        (f: any) => f.properties.entityId === entityId
+      );
+
+      const props = clickedFeature.properties;
+
+      const baseFillColor =
+        (layerType === 'all-countries' || layerType === 'country') ? "#3b82f6" :
+          (layerType === 'all-states' || layerType === 'state') ? "#10b981" :
+            "#f59e0b";
+
+      addLayer({
+        entityId,
+        name: props.name || props.code || `Layer ${layersRef.current.length + 1}`,
+        type: props.savedLayerType,
+        geoJsonData: {
+          type: "FeatureCollection",
+          features: entityFeatures
+        },
+        fillColor: baseFillColor,
+        borderColor: "#000000"
+      });
+    }
+  }, [geoJsonData, layerType, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer]);
+
+  const currentLayerPaint = React.useMemo(() => {
+    const defaultFillColor =
+      (layerType === 'all-countries' || layerType === 'country') ? "#3b82f6" :
+        (layerType === 'all-states' || layerType === 'state') ? "#10b981" :
+          "#f59e0b";
+    return {
+      "fill-color": defaultFillColor,
+      "fill-opacity": 0.2,
+    };
+  }, [layerType]);
+
+  const currentBorderPaint = React.useMemo(() => ({
+    "line-color": "#000000",
+    "line-width": 1,
+    "line-opacity": 0.5
+  }), []);
+
+  const renderCurrentLayer = useMemo(() => {
     if (!geoJsonData) return null;
 
-    const sourceId = `${layerType}-source`;
-    const layerId = `${layerType}-layer`;
-    const borderId = `${layerType}-border`;
+    const sourceId = `current-${layerType}-source`;
+    const layerId = `current-${layerType}-layer`;
+    const borderId = `current-${layerType}-border`;
 
     return (
-      <React.Fragment key={layerType}>
+      <React.Fragment key={`current-${layerType}`}>
         <Layer
           id={layerId}
           source={sourceId}
           geoJsonData={geoJsonData}
           type="fill"
-          paint={{
-            "fill-color": layerType === 'country' ? "#3b82f6" : layerType === 'state' ? "#10b981" : "#f59e0b",
-            "fill-opacity": 0.3,
-          }}
+          paint={currentLayerPaint}
+          onClick={handleMapClick}
         />
         <Layer
           id={borderId}
           source={sourceId}
           geoJsonData={geoJsonData}
           type="line"
-          paint={{
-            "line-color": "#000",
-            "line-width": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
-              7, 0.2,
-              10, 0.5,
-              12, 1
-            ],
-            "line-opacity": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
-              7, 0.5,
-              10, 0.8,
-              12, 1
-            ]
-          }}
+          paint={currentBorderPaint}
         />
       </React.Fragment>
     );
-  }, [geoJsonData, layerType]);
+  }, [geoJsonData, layerType, currentLayerPaint, currentBorderPaint, handleMapClick]);
+
+  const renderSavedLayers = useMemo(() => {
+    return layers.map((layer) => {
+      if (!layer.visible) return null;
+
+      return (
+        <React.Fragment key={layer.id}>
+          <Layer
+            id={`${layer.id}-fill`}
+            source={`${layer.id}-source`}
+            geoJsonData={layer.geoJsonData}
+            type="fill"
+            paint={{
+              "fill-color": layer.fillColor,
+              "fill-opacity": layer.opacity,
+            }}
+          />
+          <Layer
+            id={`${layer.id}-border`}
+            source={`${layer.id}-source`}
+            geoJsonData={layer.geoJsonData}
+            type="line"
+            paint={{
+              "line-color": layer.borderColor,
+              "line-width": 2,
+            }}
+          />
+        </React.Fragment>
+      );
+    });
+  }, [layers]);
+
+  const sidebarWidth = isSidebarOpen ? (selectedLayerId ? 600 : 300) : 0;
 
   return (
     <div
-      className={`h-[calc(100vh-64px)] ml-auto ${className} relative transition-all ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:w-[calc(100vw-400px)] data-[state=closed]:w-screen overflow-hidden`}
+      className={`h-[calc(100vh-64px)] ${className} relative transition-all duration-500 ease-in-out overflow-hidden`}
+      style={{ width: `calc(100vw - ${sidebarWidth}px)` }}
     >
       <Button
-        onClick={handleClick}
+        onClick={toggleSidebar}
         className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-50"
       >
-        {open ? (
+        {isSidebarOpen ? (
           <>
-            {SITE_CONFIG.ui.fullView}
-            <ChevronRight className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
+            {SITE_CONFIG.ui.hideLayers}
           </>
         ) : (
           <>
-            <ChevronLeft className="h-4 w-4" />
-            {SITE_CONFIG.ui.listView}
+            {SITE_CONFIG.ui.showLayers}
+            <ChevronRight className="h-4 w-4" />
           </>
         )}
       </Button>
@@ -130,7 +214,8 @@ const MainMap = ({
         onLoad={onMapLoad}
       >
         {loading && <Loading />}
-        {renderLayers}
+        {renderCurrentLayer}
+        {renderSavedLayers}
         <Marker position={[-97.8, 38.3]}>
           <div>
           </div>
