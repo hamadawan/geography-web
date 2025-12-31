@@ -14,10 +14,14 @@ interface MapProps {
   children?: ReactNode;
 }
 
+const DEFAULT_CENTER: [number, number] = [-97.60330078860761, 38.28943896611448];
+const DEFAULT_ZOOM = 7;
+const DEFAULT_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+
 const Map = ({
-  mapStyle = 'https://tiles.openfreemap.org/styles/liberty',
-  zoom = 7,
-  center = [-97.60330078860761, 38.28943896611448],
+  mapStyle = DEFAULT_STYLE,
+  zoom = DEFAULT_ZOOM,
+  center = DEFAULT_CENTER,
   style,
   containerClass = '',
   onLoad,
@@ -27,6 +31,11 @@ const Map = ({
   const [mapInstance, setMapInstance] = useState<maplibre.Map | null>(null);
 
   const mapRef = useRef<maplibre.Map | null>(null);
+  const onLoadRef = useRef(onLoad);
+
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
@@ -41,15 +50,16 @@ const Map = ({
       map.on('style.load', () => {
         mapRef.current = map;
         setMapInstance(map);
-        if (onLoad) onLoad(map);
+        if (onLoadRef.current) onLoadRef.current(map);
       });
 
       return () => {
         map.remove();
         mapRef.current = null;
+        setMapInstance(null);
       };
     }
-  }, [mapStyle, center, zoom, onLoad]);
+  }, [mapStyle]);
 
   return (
     <div ref={mapContainerRef} style={style} className={containerClass} >

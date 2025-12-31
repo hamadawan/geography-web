@@ -34,7 +34,7 @@ const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) =>
         }
       }
     };
-  }, [map, source, geoJsonData]);
+  }, [map, source]);
 
   useEffect(() => {
     if (!map || !source || !geoJsonData) return;
@@ -62,7 +62,7 @@ const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) =>
         map.removeLayer(id);
       }
     };
-  }, [map, id, source, type, paint]);
+  }, [map, id, source, type]);
 
   // Layer property updates
   useEffect(() => {
