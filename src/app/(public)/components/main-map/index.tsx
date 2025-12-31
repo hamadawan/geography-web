@@ -105,8 +105,7 @@ const MainMap = ({
 
   return (
     <div
-      className={`h-screen ml-auto ${className} relative transition-all ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:w-[calc(100vw-400px)] data-[state=closed]:w-screen overflow-hidden`}
-      data-state={open ? "open" : "closed"}
+      className={`h-[calc(100vh-64px)] ml-auto ${className} relative transition-all ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:w-[calc(100vw-400px)] data-[state=closed]:w-screen overflow-hidden`}
     >
       <Button
         onClick={handleClick}

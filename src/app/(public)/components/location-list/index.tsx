@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useState, useMemo } from "react";
 import LocationCard from "../location-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SITE_CONFIG } from "@/lib/constants/site";
@@ -25,28 +25,35 @@ export default function LocationList({
   onItemClick,
   breadcrumbs
 }: LocationListProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return items;
+    
+    const query = searchQuery.toLowerCase();
+    return items.filter((item) =>
+      item.name?.toLowerCase().includes(query)
+    );
+  }, [items, searchQuery]);
+
   const handleItemClick = (item: any) => {
     if (!mapInstance) return;
 
-    // Use pre-calculated bounding box if available
     if (item.bbox && Array.isArray(item.bbox) && item.bbox.length === 4) {
       const [minLon, minLat, maxLon, maxLat] = item.bbox;
 
-      // Use fitBounds to automatically calculate zoom level
       mapInstance.fitBounds(
         [
-          [minLon, minLat], // Southwest corner
-          [maxLon, maxLat]  // Northeast corner
+          [minLon, minLat],
+          [maxLon, maxLat] 
         ],
         {
-          padding: 50,      // Add padding around the bounds
-          duration: 1000,   // Smooth 1-second animation
-          maxZoom: 15       // Don't zoom in too much for small areas
+          padding: 50,     
+          duration: 1000,  
+          maxZoom: 15      
         }
       );
     }
-
-    // Always call onItemClick to allow the parent to handle selection logic
     onItemClick(item);
   };
 
@@ -73,22 +80,33 @@ export default function LocationList({
             ))}
           </div>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 mb-4">
           {breadcrumbs.length === 1 && SITE_CONFIG.ui.selectCountry}
           {breadcrumbs.length === 2 && SITE_CONFIG.ui.selectState}
           {breadcrumbs.length === 3 && SITE_CONFIG.ui.selectPostalCode}
         </p>
+        <input
+          type="text"
+          placeholder="Search locations..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
       <ScrollArea className="h-[calc(100vh-76px)]">
         <div className="flex flex-col gap-y-4 pb-4 p-4">
-          {items?.map((location) => (
-            <LocationCard
-              key={location.id || location.code}
-              className="border-none"
-              item={location}
-              onClick={() => handleItemClick(location)}
-            />
-          ))}
+          {filteredItems?.length > 0 ? (
+            filteredItems.map((location) => (
+              <LocationCard
+                key={location.id || location.code}
+                className="border-none"
+                item={location}
+                onClick={() => handleItemClick(location)}
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-500 py-8">No locations found</p>
+          )}
         </div>
       </ScrollArea>
     </div>
