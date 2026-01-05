@@ -1,22 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Download, Map } from "lucide-react";
+import { Map } from "lucide-react";
 
 import { CountrySelect } from "../country-select";
 import { StateSelect } from "../state-select";
 import { ZipcodeSelect } from "../zipcode-select";
 
 import { useSelectionStore } from "@/lib/store/selection-store";
+import { Separator } from "@/components/ui/separator"; // Added missing import for Separator
 
-interface HeaderProps {
-  onExport?: () => void;
-}
-
-export default function Header({
-  onExport,
-}: HeaderProps) {
+export default function Header() {
   const {
     selectedCountry,
     selectedState,

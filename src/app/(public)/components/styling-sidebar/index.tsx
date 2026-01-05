@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useLayerStore } from "@/lib/store/layer-store";
-import { X, Paintbrush, Square, Type, MousePointer2, Image as ImageIcon, Trash2 } from "lucide-react";
+import { X, Paintbrush, Square, Type, MousePointer2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -266,7 +266,7 @@ const StylingSidebar = () => {
                                         <select
                                             id="border-style"
                                             value={selectedLayer.borderStyle}
-                                            onChange={(e) => updateLayer(selectedLayer.id, { borderStyle: e.target.value as any })}
+                                            onChange={(e) => updateLayer(selectedLayer.id, { borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' })}
                                             className="flex h-9 w-full rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-all cursor-pointer font-medium"
                                         >
                                             <option value="solid">Solid</option>

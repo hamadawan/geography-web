@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SITE_CONFIG } from "../constants/site";
 import { Layer } from "../store/layer-store";
 

@@ -10,7 +10,7 @@ import Loading from "@/components/loading";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/constants/site";
 
-import { useLayerStore, Layer as LayerType } from "@/lib/store/layer-store";
+import { Layer as LayerType } from "@/lib/store/layer-store";
 import { useMainMap } from "./use-main-map";
 
 interface MainMapProps {
