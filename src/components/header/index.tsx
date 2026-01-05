@@ -1,6 +1,9 @@
 "use client";
 
-import { Map } from "lucide-react";
+import { Map, Code } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 import { CountrySelect } from "../country-select";
 import { StateSelect } from "../state-select";
@@ -9,7 +12,12 @@ import { ZipcodeSelect } from "../zipcode-select";
 import { useSelectionStore } from "@/lib/store/selection-store";
 import { Separator } from "@/components/ui/separator"; // Added missing import for Separator
 
-export default function Header() {
+interface HeaderProps {
+  showSelectors?: boolean;
+}
+
+export default function Header({ showSelectors = true }: HeaderProps) {
+  const pathname = usePathname();
   const {
     selectedCountry,
     selectedState,
@@ -21,45 +29,45 @@ export default function Header() {
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4">
-      {/* Logo */}
-      <div className="flex items-center gap-2 font-semibold">
+      <Link href="/" className="flex items-center gap-2 font-semibold hover:opacity-80 transition-opacity">
         <Map className="h-5 w-5 text-primary" />
         <span>GeoBoundary</span>
-      </div>
+      </Link>
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* Selectors */}
       <div className="flex flex-1 items-center gap-3">
-        <CountrySelect
-          value={selectedCountry ?? undefined}
-          onChange={setSelectedCountry}
-        />
+        {showSelectors && (
+          <>
+            <CountrySelect
+              value={selectedCountry ?? undefined}
+              onChange={setSelectedCountry}
+            />
 
-        <StateSelect
-          countryCode={selectedCountry?.code}
-          value={selectedState ?? undefined}
-          onChange={setSelectedState}
-        />
+            <StateSelect
+              countryCode={selectedCountry?.code}
+              value={selectedState ?? undefined}
+              onChange={setSelectedState}
+            />
 
-        <ZipcodeSelect
-          stateCode={selectedState?.code}
-          value={selectedZip ?? undefined}
-          onChange={setSelectedZip}
-        />
+            <ZipcodeSelect
+              stateCode={selectedState?.code}
+              value={selectedZip ?? undefined}
+              onChange={setSelectedZip}
+            />
+          </>
+        )}
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-2">
-        {/* <Button
-          variant="outline"
-          size="sm"
-          onClick={onExport}
-          disabled={!selectedCountry}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button> */}
+        {pathname !== "/geojson-editor" && (
+          <Link href="/geojson-editor">
+            <Button variant="outline" size="sm">
+              <Code className="mr-2 h-4 w-4" />
+              GeoJSON Editor
+            </Button>
+          </Link>
+        )}
       </div>
     </header>
   );

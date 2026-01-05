@@ -19,6 +19,8 @@ interface MainMapProps {
   className?: string;
   onMapLoad?: (map: any) => void;
   layerType?: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
+  rightSidebarWidth?: number;
+  children?: React.ReactNode;
 }
 
 
@@ -28,6 +30,8 @@ const MainMap = ({
   className = "",
   onMapLoad,
   layerType = 'all-countries',
+  rightSidebarWidth = 0,
+  children,
 }: MainMapProps) => {
   const {
     layers,
@@ -128,7 +132,7 @@ const MainMap = ({
   return (
     <div
       className={`h-[calc(100vh-64px)] ${className} relative transition-all duration-500 ease-in-out overflow-hidden`}
-      style={{ width: `calc(100vw - ${sidebarWidth}px)` }}
+      style={{ width: `calc(100vw - ${sidebarWidth + rightSidebarWidth}px)` }}
     >
       <Button
         onClick={toggleSidebar}
@@ -156,6 +160,7 @@ const MainMap = ({
         {loading && <Loading />}
         {renderCurrentLayer}
         {renderSavedLayers}
+        {children}
         <Marker position={[-97.8, 38.3]}>
           <div>
           </div>

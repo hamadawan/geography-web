@@ -3,25 +3,17 @@ import { SITE_CONFIG } from "../constants/site";
 import { Layer } from "../store/layer-store";
 
 export const exportLayersToGeoJSON = (layers: Layer[]): string => {
-    // ... (rest of export function remains same)
     const featureCollection = {
         type: "FeatureCollection",
         features: layers.map((layer) => {
-            // If geoJsonData is already a FeatureCollection, we might need to handle it differently
-            // but usually it's a single Feature or Geometry.
-            // Let's assume we want to wrap it into a Feature if it's just geometry.
-
             const data = layer.geoJsonData as any;
             let feature: any;
 
             if (data.type === "Feature") {
                 feature = { ...data };
             } else if (data.type === "FeatureCollection") {
-                // If it's a collection, we take the first feature or merge them?
-                // For our app, layers usually correspond to one entity (country/state/zip).
                 feature = data.features[0] || { type: "Feature", geometry: null, properties: {} };
             } else {
-                // Assume it's a geometry
                 feature = {
                     type: "Feature",
                     geometry: data,
@@ -29,9 +21,16 @@ export const exportLayersToGeoJSON = (layers: Layer[]): string => {
                 };
             }
 
-            // Inject our custom properties
+            // Ensure properties exists
+            feature.properties = feature.properties || {};
+
+            // Clean up non-standard properties from the source data if they exist
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { geom_simplified: _geom_simplified, geom: _geom, entityId: _entityId, savedLayerType: _savedLayerType, ...cleanProps } = feature.properties;
+
+            // Inject our custom properties with gc: prefix
             feature.properties = {
-                ...feature.properties,
+                ...cleanProps,
                 "gc:name": layer.name,
                 "gc:type": layer.type,
                 "gc:fillColor": layer.fillColor,
@@ -43,7 +42,7 @@ export const exportLayersToGeoJSON = (layers: Layer[]): string => {
                 "gc:entityId": layer.entityId,
                 "gc:bbox": layer.bbox,
                 "gc:fillImage": layer.fillImage,
-                // Standard GeoJSON styling properties (optional but good for compatibility)
+                // Standard GeoJSON styling properties for compatibility
                 fill: layer.fillColor,
                 stroke: layer.borderColor,
                 "fill-opacity": layer.fillOpacity,
@@ -64,18 +63,29 @@ export const exportLayersToGeoJSON = (layers: Layer[]): string => {
 };
 
 export const importLayersFromGeoJSON = (geoJson: any): Omit<Layer, "id" | "visible">[] => {
-    if (!geoJson || geoJson.type !== "FeatureCollection" || !Array.isArray(geoJson.features)) {
-        throw new Error("Invalid GeoJSON: Expected a FeatureCollection");
+    if (!geoJson) {
+        throw new Error("Invalid GeoJSON: Input is null or undefined");
     }
 
-    return geoJson.features.map((feature: any) => {
+    let features: any[] = [];
+    if (geoJson.type === "FeatureCollection" && Array.isArray(geoJson.features)) {
+        features = geoJson.features;
+    } else if (geoJson.type === "Feature") {
+        features = [geoJson];
+    } else if (geoJson.type && ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection"].includes(geoJson.type)) {
+        features = [{ type: "Feature", geometry: geoJson, properties: {} }];
+    } else {
+        throw new Error("Invalid GeoJSON: Expected a FeatureCollection, Feature, or Geometry");
+    }
+
+    return features.map((feature: any) => {
         const props = feature.properties || {};
         const layerType = (props["gc:type"] || "country") as keyof typeof SITE_CONFIG.map.layerStyles;
         const style = SITE_CONFIG.map.layerStyles[layerType] || SITE_CONFIG.map.layerStyles.country;
 
         return {
             name: props["gc:name"] || props.name || "Imported Layer",
-            type: props["gc:type"] || "country", // Default to country if unknown
+            type: props["gc:type"] || "country",
             entityId: props["gc:entityId"],
             geoJsonData: {
                 type: "Feature",

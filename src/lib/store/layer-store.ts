@@ -5,7 +5,7 @@ export interface Layer {
     id: string;
     entityId?: string;
     name: string;
-    type: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
+    type: 'editor-layer' | 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
     geoJsonData: unknown;
     fillColor: string;
     fillOpacity: number;
@@ -36,7 +36,8 @@ export const useLayerStore = create<LayerStore>((set) => ({
     selectedLayerId: null,
     isSidebarOpen: false,
     addLayer: (layer) => set((state) => {
-        const style = SITE_CONFIG.map.layerStyles[layer.type];
+        const layerType = (layer.type === 'editor-layer' ? 'country' : layer.type) as keyof typeof SITE_CONFIG.map.layerStyles;
+        const style = SITE_CONFIG.map.layerStyles[layerType];
         const id = Math.random().toString(36).substring(7);
         const newLayer: Layer = {
             ...layer,
@@ -52,7 +53,8 @@ export const useLayerStore = create<LayerStore>((set) => ({
     }),
     addLayers: (newLayers) => set((state) => {
         const layersWithIds = newLayers.map((layer) => {
-            const style = SITE_CONFIG.map.layerStyles[layer.type];
+            const layerType = (layer.type === 'editor-layer' ? 'country' : layer.type) as keyof typeof SITE_CONFIG.map.layerStyles;
+            const style = SITE_CONFIG.map.layerStyles[layerType];
             return {
                 ...layer,
                 id: Math.random().toString(36).substring(7),

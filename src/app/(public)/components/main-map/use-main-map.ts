@@ -34,10 +34,13 @@ export const useMainMap = ({ items, layerType, onMapLoad }: UseMainMapProps) => 
 
             const entityId = `${baseType}:${item.country_code ? item.country_code + ':' : ''}${item.code}`;
 
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { geom_simplified: _geom_simplified, geom: _geom, ...restProps } = item;
+
             features.push({
                 type: "Feature",
                 properties: {
-                    ...item,
+                    ...restProps,
                     entityId,
                     savedLayerType: baseType,
                 },
