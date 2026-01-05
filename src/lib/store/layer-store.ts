@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { SITE_CONFIG } from '@/lib/constants/site';
 
 export interface Layer {
     id: string;
@@ -7,16 +8,21 @@ export interface Layer {
     type: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
     geoJsonData: unknown;
     fillColor: string;
+    fillOpacity: number;
     borderColor: string;
+    borderOpacity: number;
+    borderWidth: number;
+    borderStyle: 'solid' | 'dashed' | 'dotted';
     visible: boolean;
-    opacity: number;
+    bbox?: number[];
 }
 
 interface LayerStore {
     layers: Layer[];
     selectedLayerId: string | null;
     isSidebarOpen: boolean;
-    addLayer: (layer: Omit<Layer, 'id' | 'visible' | 'opacity'>) => void;
+    addLayer: (layer: Omit<Layer, 'id' | 'visible' | 'fillOpacity' | 'borderOpacity' | 'borderWidth' | 'borderStyle'>) => void;
+    addLayers: (layers: Omit<Layer, 'id' | 'visible'>[]) => void;
     removeLayer: (id: string) => void;
     updateLayer: (id: string, updates: Partial<Layer>) => void;
     setSelectedLayer: (id: string | null) => void;
@@ -29,17 +35,37 @@ export const useLayerStore = create<LayerStore>((set) => ({
     selectedLayerId: null,
     isSidebarOpen: false,
     addLayer: (layer) => set((state) => {
+        const style = SITE_CONFIG.map.layerStyles[layer.type];
         const id = Math.random().toString(36).substring(7);
         const newLayer: Layer = {
             ...layer,
+            ...style,
             id,
             visible: true,
-            opacity: 0.3,
         };
         return {
             layers: [...state.layers, newLayer],
             selectedLayerId: id,
-            isSidebarOpen: true, // Open sidebar when a layer is added
+            isSidebarOpen: true,
+        };
+    }),
+    addLayers: (newLayers) => set((state) => {
+        const layersWithIds = newLayers.map((layer) => {
+            const style = SITE_CONFIG.map.layerStyles[layer.type];
+            return {
+                ...layer,
+                id: Math.random().toString(36).substring(7),
+                visible: true,
+                fillOpacity: layer.fillOpacity ?? style.fillOpacity,
+                borderOpacity: layer.borderOpacity ?? style.borderOpacity,
+                borderWidth: layer.borderWidth ?? style.borderWidth,
+                borderStyle: layer.borderStyle ?? style.borderStyle,
+            };
+        });
+        return {
+            layers: [...state.layers, ...layersWithIds],
+            selectedLayerId: layersWithIds.length > 0 ? layersWithIds[0].id : state.selectedLayerId,
+            isSidebarOpen: true,
         };
     }),
     removeLayer: (id) => set((state) => ({

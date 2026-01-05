@@ -58,7 +58,7 @@ export default function Header({
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={onExport}
@@ -66,7 +66,7 @@ export default function Header({
         >
           <Download className="mr-2 h-4 w-4" />
           Export
-        </Button>
+        </Button> */}
       </div>
     </header>
   );

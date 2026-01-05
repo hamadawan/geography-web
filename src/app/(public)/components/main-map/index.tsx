@@ -29,6 +29,7 @@ const MainMap = ({
   layerType = 'all-countries',
 }: MainMapProps) => {
   const { layers, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer, selectedLayerId } = useLayerStore();
+  const mapRef = React.useRef<any>(null);
 
   const geoJsonData = useMemo(() => {
     if (!items || items.length === 0) return null;
@@ -74,7 +75,6 @@ const MainMap = ({
       const clickedFeature = e.features[0];
       const entityId = clickedFeature.properties.entityId;
 
-      // Check if layer already exists for this entity
       const existingLayer = layersRef.current.find(l => l.entityId === entityId);
       if (existingLayer) {
         setSelectedLayer(existingLayer.id);
@@ -82,17 +82,14 @@ const MainMap = ({
         return;
       }
 
-      // Gather all features belonging to this entity
       const entityFeatures = geoJsonData.features.filter(
         (f: any) => f.properties.entityId === entityId
       );
 
       const props = clickedFeature.properties;
 
-      const baseFillColor =
-        (layerType === 'all-countries' || layerType === 'country') ? "#3b82f6" :
-          (layerType === 'all-states' || layerType === 'state') ? "#10b981" :
-            "#f59e0b";
+      const style = SITE_CONFIG.map.layerStyles[props.savedLayerType as keyof typeof SITE_CONFIG.map.layerStyles];
+      const baseFillColor = style.fillColor;
 
       addLayer({
         entityId,
@@ -103,26 +100,25 @@ const MainMap = ({
           features: entityFeatures
         },
         fillColor: baseFillColor,
-        borderColor: "#000000"
+        borderColor: style.borderColor,
+        bbox: props.bbox ? (typeof props.bbox === 'string' ? JSON.parse(props.bbox) : props.bbox) : undefined
       });
     }
   }, [geoJsonData, layerType, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer]);
 
   const currentLayerPaint = React.useMemo(() => {
-    const defaultFillColor =
-      (layerType === 'all-countries' || layerType === 'country') ? "#3b82f6" :
-        (layerType === 'all-states' || layerType === 'state') ? "#10b981" :
-          "#f59e0b";
+    const style = SITE_CONFIG.map.layerStyles[layerType];
+    const defaultFillColor = style.fillColor;
     return {
       "fill-color": defaultFillColor,
-      "fill-opacity": 0.2,
+      "fill-opacity": SITE_CONFIG.map.preview.fillOpacity,
     };
   }, [layerType]);
 
   const currentBorderPaint = React.useMemo(() => ({
-    "line-color": "#000000",
-    "line-width": 1,
-    "line-opacity": 0.5
+    "line-color": SITE_CONFIG.map.preview.borderColor,
+    "line-width": SITE_CONFIG.map.preview.borderWidth,
+    "line-opacity": SITE_CONFIG.map.preview.borderOpacity
   }), []);
 
   const renderCurrentLayer = useMemo(() => {
@@ -166,7 +162,11 @@ const MainMap = ({
             type="fill"
             paint={{
               "fill-color": layer.fillColor,
-              "fill-opacity": layer.opacity,
+              "fill-opacity": layer.fillOpacity,
+            }}
+            onClick={() => {
+              setSelectedLayer(layer.id);
+              if (!isSidebarOpen) toggleSidebar();
             }}
           />
           <Layer
@@ -176,13 +176,33 @@ const MainMap = ({
             type="line"
             paint={{
               "line-color": layer.borderColor,
-              "line-width": 2,
+              "line-width": layer.borderWidth,
+              "line-opacity": layer.borderOpacity,
+              "line-dasharray": layer.borderStyle === 'dashed' ? [2, 2] : layer.borderStyle === 'dotted' ? [1, 1] : [1, 0],
             }}
           />
         </React.Fragment>
       );
     });
   }, [layers]);
+
+  React.useEffect(() => {
+    if (selectedLayerId && mapRef.current) {
+      const layer = layers.find(l => l.id === selectedLayerId);
+      if (layer && layer.bbox) {
+        mapRef.current.fitBounds(layer.bbox, {
+          padding: 100,
+          duration: 1500,
+          essential: true
+        });
+      }
+    }
+  }, [selectedLayerId, layers]);
+
+  const handleMapLoad = (map: any) => {
+    mapRef.current = map;
+    if (onMapLoad) onMapLoad(map);
+  };
 
   const sidebarWidth = isSidebarOpen ? (selectedLayerId ? 600 : 300) : 0;
 
@@ -193,7 +213,8 @@ const MainMap = ({
     >
       <Button
         onClick={toggleSidebar}
-        className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-50"
+        variant="secondary"
+        className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-50 bg-white hover:bg-white/90 text-black"
       >
         {isSidebarOpen ? (
           <>
@@ -211,7 +232,7 @@ const MainMap = ({
         containerClass={"h-screen w-100 relative"}
         zoom={4}
         center={[-97.6, 38.3]}
-        onLoad={onMapLoad}
+        onLoad={handleMapLoad}
       >
         {loading && <Loading />}
         {renderCurrentLayer}

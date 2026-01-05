@@ -56,6 +56,66 @@ export const SITE_CONFIG = {
         breadcrumbs: {
             countries: "Countries"
         }
+    },
+
+    // Map Defaults
+    map: {
+        layerStyles: {
+            'all-countries': {
+                fillColor: "#3b82f6",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+            'country': {
+                fillColor: "#3b82f6",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+            'all-states': {
+                fillColor: "#10b981",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+            'state': {
+                fillColor: "#10b981",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+            'all-zipcodes': {
+                fillColor: "#f59e0b",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+            'zipcode': {
+                fillColor: "#f59e0b",
+                fillOpacity: 0.3,
+                borderColor: "#000000",
+                borderOpacity: 1,
+                borderWidth: 1,
+                borderStyle: 'solid' as const,
+            },
+        },
+        preview: {
+            fillOpacity: 0.2,
+            borderOpacity: 0.5,
+            borderWidth: 1,
+            borderColor: "#000000",
+        }
     }
 };
 

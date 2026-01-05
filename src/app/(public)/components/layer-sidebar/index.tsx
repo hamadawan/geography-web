@@ -4,11 +4,13 @@ import React from "react";
 import { useLayerStore } from "@/lib/store/layer-store";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Eye, EyeOff, Trash2, Layers } from "lucide-react";
+import { Eye, EyeOff, Trash2, Layers, Download, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLayerSidebar } from "./use-layer-sidebar";
 
 const LayerSidebar = () => {
     const { layers, selectedLayerId, removeLayer, setSelectedLayer, toggleVisibility, isSidebarOpen } = useLayerStore();
+    const { handleExport, handleImport, triggerImport, fileInputRef, canExport } = useLayerSidebar();
 
     return (
         <div
@@ -18,9 +20,39 @@ const LayerSidebar = () => {
             )}
         >
             <div className="flex-1 min-w-[300px] flex flex-col overflow-hidden">
-                <div className="p-4 border-b flex items-center gap-2">
-                    <Layers className="h-5 w-5" />
-                    <h2 className="font-semibold">Map Layers</h2>
+                <div className="p-4 border-b flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Layers className="h-5 w-5" />
+                        <h2 className="font-semibold">Map Layers</h2>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImport}
+                            accept=".json,.geojson"
+                            className="hidden"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={triggerImport}
+                            title="Import Layers"
+                        >
+                            <Upload className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={handleExport}
+                            disabled={!canExport}
+                            title="Export Layers"
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
 
                 <ScrollArea className="flex-1">

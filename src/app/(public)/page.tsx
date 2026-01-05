@@ -104,11 +104,7 @@ const App = () => {
 
   return (
     <main className="flex flex-col h-screen overflow-hidden">
-      <Header
-        onExport={() => {
-          console.log("Export clicked");
-        }}
-      />
+      <Header />
       <div className="flex flex-1 overflow-hidden">
         <LayerSidebar />
         <StylingSidebar />
