@@ -68,6 +68,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
             'country': {
                 fillColor: "#3b82f6",
@@ -76,6 +77,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
             'all-states': {
                 fillColor: "#10b981",
@@ -84,6 +86,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
             'state': {
                 fillColor: "#10b981",
@@ -92,6 +95,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
             'all-zipcodes': {
                 fillColor: "#f59e0b",
@@ -100,6 +104,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
             'zipcode': {
                 fillColor: "#f59e0b",
@@ -108,6 +113,7 @@ export const SITE_CONFIG = {
                 borderOpacity: 1,
                 borderWidth: 1,
                 borderStyle: 'solid' as const,
+                fillImage: null as string | null,
             },
         },
         preview: {

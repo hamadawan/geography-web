@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useLayerStore } from "@/lib/store/layer-store";
-import { X, Paintbrush, Square, Type, MousePointer2 } from "lucide-react";
+import { X, Paintbrush, Square, Type, MousePointer2, Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +107,84 @@ const StylingSidebar = () => {
                                             <div className="flex justify-between mt-1">
                                                 <span className="text-[9px] text-muted-foreground font-medium">{Math.round(selectedLayer.fillOpacity * 100)}%</span>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator className="bg-muted-foreground/10" />
+
+                            {/* Image Fill Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <ImageIcon className="h-3.5 w-3.5" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Image Fill</span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative group shrink-0">
+                                            <div className="w-16 h-16 rounded-md border border-muted-foreground/20 bg-muted/20 overflow-hidden flex items-center justify-center">
+                                                {selectedLayer.fillImage ? (
+                                                    <img
+                                                        src={selectedLayer.fillImage}
+                                                        alt="Fill"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                                                )}
+                                            </div>
+                                            {selectedLayer.fillImage && (
+                                                <button
+                                                    onClick={() => updateLayer(selectedLayer.id, { fillImage: null })}
+                                                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 space-y-2">
+                                            <p className="text-[10px] text-muted-foreground leading-tight">
+                                                Upload an image to use as a pattern fill for this polygon.
+                                            </p>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-[10px] px-2"
+                                                    onClick={() => document.getElementById('fill-image-upload')?.click()}
+                                                >
+                                                    {selectedLayer.fillImage ? 'Change Image' : 'Upload Image'}
+                                                </Button>
+                                                {selectedLayer.fillImage && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 text-[10px] px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => updateLayer(selectedLayer.id, { fillImage: null })}
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <input
+                                                id="fill-image-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = (event) => {
+                                                            updateLayer(selectedLayer.id, { fillImage: event.target?.result as string });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 </div>

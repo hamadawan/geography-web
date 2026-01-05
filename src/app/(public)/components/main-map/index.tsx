@@ -10,7 +10,8 @@ import Loading from "@/components/loading";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/constants/site";
 
-import { useLayerStore } from "@/lib/store/layer-store";
+import { useLayerStore, Layer as LayerType } from "@/lib/store/layer-store";
+import { useMainMap } from "./use-main-map";
 
 interface MainMapProps {
   items: any[] | null;
@@ -28,98 +29,19 @@ const MainMap = ({
   onMapLoad,
   layerType = 'all-countries',
 }: MainMapProps) => {
-  const { layers, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer, selectedLayerId } = useLayerStore();
-  const mapRef = React.useRef<any>(null);
-
-  const geoJsonData = useMemo(() => {
-    if (!items || items.length === 0) return null;
-
-    const baseType = layerType.startsWith('all-')
-      ? layerType.slice(4).replace(/ies$/, 'y').replace(/s$/, '')
-      : layerType;
-
-    const features = items
-      .filter((item) => item.geom_simplified)
-      .map((item) => {
-        const geom = typeof item.geom_simplified === 'string'
-          ? JSON.parse(item.geom_simplified)
-          : item.geom_simplified;
-
-        const entityId = `${baseType}:${item.country_code ? item.country_code + ':' : ''}${item.code}`;
-
-        return {
-          type: "Feature",
-          properties: {
-            ...item,
-            entityId,
-            savedLayerType: baseType,
-          },
-          geometry: geom,
-        };
-      });
-
-    return {
-      type: "FeatureCollection",
-      features,
-    };
-  }, [items, layerType]);
-
-  const layersRef = React.useRef(layers);
-  React.useEffect(() => {
-    layersRef.current = layers;
-  }, [layers]);
-
-  const handleMapClick = React.useCallback((e: any) => {
-    if (!geoJsonData) return;
-    if (e.features && e.features.length > 0) {
-      const clickedFeature = e.features[0];
-      const entityId = clickedFeature.properties.entityId;
-
-      const existingLayer = layersRef.current.find(l => l.entityId === entityId);
-      if (existingLayer) {
-        setSelectedLayer(existingLayer.id);
-        if (!isSidebarOpen) toggleSidebar();
-        return;
-      }
-
-      const entityFeatures = geoJsonData.features.filter(
-        (f: any) => f.properties.entityId === entityId
-      );
-
-      const props = clickedFeature.properties;
-
-      const style = SITE_CONFIG.map.layerStyles[props.savedLayerType as keyof typeof SITE_CONFIG.map.layerStyles];
-      const baseFillColor = style.fillColor;
-
-      addLayer({
-        entityId,
-        name: props.name || props.code || `Layer ${layersRef.current.length + 1}`,
-        type: props.savedLayerType,
-        geoJsonData: {
-          type: "FeatureCollection",
-          features: entityFeatures
-        },
-        fillColor: baseFillColor,
-        borderColor: style.borderColor,
-        bbox: props.bbox ? (typeof props.bbox === 'string' ? JSON.parse(props.bbox) : props.bbox) : undefined
-      });
-    }
-  }, [geoJsonData, layerType, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer]);
-
-  const currentLayerPaint = React.useMemo(() => {
-    const style = SITE_CONFIG.map.layerStyles[layerType];
-    const defaultFillColor = style.fillColor;
-    return {
-      "fill-color": defaultFillColor,
-      "fill-opacity": SITE_CONFIG.map.preview.fillOpacity,
-    };
-  }, [layerType]);
-
-  const currentBorderPaint = React.useMemo(() => ({
-    "line-color": SITE_CONFIG.map.preview.borderColor,
-    "line-width": SITE_CONFIG.map.preview.borderWidth,
-    "line-opacity": SITE_CONFIG.map.preview.borderOpacity
-  }), []);
+  const {
+    layers,
+    isSidebarOpen,
+    toggleSidebar,
+    setSelectedLayer,
+    selectedLayerId,
+    geoJsonData,
+    handleMapClick,
+    currentLayerPaint,
+    currentBorderPaint,
+    loadedImages,
+    handleMapLoad, // This handleMapLoad comes from the hook
+  } = useMainMap({ items, layerType, onMapLoad }); // Pass props to the hook
 
   const renderCurrentLayer = useMemo(() => {
     if (!geoJsonData) return null;
@@ -150,7 +72,7 @@ const MainMap = ({
   }, [geoJsonData, layerType, currentLayerPaint, currentBorderPaint, handleMapClick]);
 
   const renderSavedLayers = useMemo(() => {
-    return layers.map((layer) => {
+    return layers.map((layer: LayerType) => {
       if (!layer.visible) return null;
 
       return (
@@ -181,28 +103,25 @@ const MainMap = ({
               "line-dasharray": layer.borderStyle === 'dashed' ? [2, 2] : layer.borderStyle === 'dotted' ? [1, 1] : [1, 0],
             }}
           />
+          {layer.fillImage && loadedImages.has(`image-${layer.id}`) && (
+            <Layer
+              id={`${layer.id}-image`}
+              source={`${layer.id}-source`}
+              geoJsonData={layer.geoJsonData}
+              type="fill"
+              paint={{
+                "fill-pattern": `image-${layer.id}`,
+              }}
+              onClick={() => {
+                setSelectedLayer(layer.id);
+                if (!isSidebarOpen) toggleSidebar();
+              }}
+            />
+          )}
         </React.Fragment>
       );
     });
-  }, [layers]);
-
-  React.useEffect(() => {
-    if (selectedLayerId && mapRef.current) {
-      const layer = layers.find(l => l.id === selectedLayerId);
-      if (layer && layer.bbox) {
-        mapRef.current.fitBounds(layer.bbox, {
-          padding: 100,
-          duration: 1500,
-          essential: true
-        });
-      }
-    }
-  }, [selectedLayerId, layers]);
-
-  const handleMapLoad = (map: any) => {
-    mapRef.current = map;
-    if (onMapLoad) onMapLoad(map);
-  };
+  }, [layers, loadedImages, isSidebarOpen, toggleSidebar, setSelectedLayer]);
 
   const sidebarWidth = isSidebarOpen ? (selectedLayerId ? 600 : 300) : 0;
 

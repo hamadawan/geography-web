@@ -41,6 +41,7 @@ export const exportLayersToGeoJSON = (layers: Layer[]): string => {
                 "gc:borderStyle": layer.borderStyle,
                 "gc:entityId": layer.entityId,
                 "gc:bbox": layer.bbox,
+                "gc:fillImage": layer.fillImage,
                 // Standard GeoJSON styling properties (optional but good for compatibility)
                 fill: layer.fillColor,
                 stroke: layer.borderColor,
@@ -87,6 +88,7 @@ export const importLayersFromGeoJSON = (geoJson: any): Omit<Layer, "id" | "visib
             borderWidth: props["gc:borderWidth"] !== undefined ? props["gc:borderWidth"] : (props["stroke-width"] !== undefined ? props["stroke-width"] : style.borderWidth),
             borderStyle: props["gc:borderStyle"] || style.borderStyle,
             bbox: props["gc:bbox"] || feature.bbox || props.bbox,
+            fillImage: props["gc:fillImage"] || style.fillImage,
         };
     });
 };

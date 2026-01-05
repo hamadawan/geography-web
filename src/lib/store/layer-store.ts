@@ -15,13 +15,14 @@ export interface Layer {
     borderStyle: 'solid' | 'dashed' | 'dotted';
     visible: boolean;
     bbox?: number[];
+    fillImage?: string | null;
 }
 
 interface LayerStore {
     layers: Layer[];
     selectedLayerId: string | null;
     isSidebarOpen: boolean;
-    addLayer: (layer: Omit<Layer, 'id' | 'visible' | 'fillOpacity' | 'borderOpacity' | 'borderWidth' | 'borderStyle'>) => void;
+    addLayer: (layer: Omit<Layer, 'id' | 'visible' | 'fillOpacity' | 'borderOpacity' | 'borderWidth' | 'borderStyle' | 'fillImage'>) => void;
     addLayers: (layers: Omit<Layer, 'id' | 'visible'>[]) => void;
     removeLayer: (id: string) => void;
     updateLayer: (id: string, updates: Partial<Layer>) => void;
@@ -60,6 +61,7 @@ export const useLayerStore = create<LayerStore>((set) => ({
                 borderOpacity: layer.borderOpacity ?? style.borderOpacity,
                 borderWidth: layer.borderWidth ?? style.borderWidth,
                 borderStyle: layer.borderStyle ?? style.borderStyle,
+                fillImage: layer.fillImage ?? style.fillImage,
             };
         });
         return {
