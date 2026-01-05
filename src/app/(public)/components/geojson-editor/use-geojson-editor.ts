@@ -67,7 +67,7 @@ export function useGeoJsonEditor({ onFitBounds }: UseGeoJsonEditorProps) {
             }
         }, 300);
         return () => clearTimeout(timeoutId);
-    }, [parsedGeoJson, error, editorLayer, addLayer, updateLayer, onFitBounds]);
+    }, [parsedGeoJson]);
 
     const handleFormat = () => {
         if (!parsedGeoJson) return;
