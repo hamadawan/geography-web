@@ -45,9 +45,14 @@ export const Polygon: React.FC<PolygonProps> = ({ map, geoJsonData }) => {
     }
 
     return () => {
-      if (map.getLayer("polygon-fill")) map.removeLayer("polygon-fill");
-      if (map.getLayer("polygon-border")) map.removeLayer("polygon-border");
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      try {
+        if (!map || !map.getStyle()) return;
+        if (map.getLayer("polygon-fill")) map.removeLayer("polygon-fill");
+        if (map.getLayer("polygon-border")) map.removeLayer("polygon-border");
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      } catch (e) {
+        console.warn('Error cleaning up polygon:', e);
+      }
     };
   }, [map, geoJsonData]);
 

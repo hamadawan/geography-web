@@ -8,20 +8,24 @@ interface MapProps {
   mapStyle?: string;
   zoom?: number;
   center?: [number, number];
+  projection?: string;
   style?: React.CSSProperties;
   containerClass?: string;
   onLoad?: (mapInstance: maplibre.Map) => void;
   children?: ReactNode;
 }
 
-const DEFAULT_CENTER: [number, number] = [-97.60330078860761, 38.28943896611448];
-const DEFAULT_ZOOM = 7;
-const DEFAULT_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+import { SITE_CONFIG } from '@/lib/constants/site';
+
+const DEFAULT_CENTER = SITE_CONFIG.map.defaultCenter;
+const DEFAULT_ZOOM = SITE_CONFIG.map.defaultZoom;
+const DEFAULT_STYLE = SITE_CONFIG.map.styles.standard.url;
 
 const Map = ({
   mapStyle = DEFAULT_STYLE,
   zoom = DEFAULT_ZOOM,
   center = DEFAULT_CENTER,
+  projection = 'globe',
   style,
   containerClass = '',
   onLoad,
@@ -31,11 +35,6 @@ const Map = ({
   const [mapInstance, setMapInstance] = useState<maplibre.Map | null>(null);
 
   const mapRef = useRef<maplibre.Map | null>(null);
-  const onLoadRef = useRef(onLoad);
-
-  useEffect(() => {
-    onLoadRef.current = onLoad;
-  }, [onLoad]);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
@@ -48,9 +47,14 @@ const Map = ({
       });
 
       map.on('style.load', () => {
-        mapRef.current = map;
-        setMapInstance(map);
-        if (onLoadRef.current) onLoadRef.current(map);
+        if (!mapRef.current) {
+          mapRef.current = map;
+          setMapInstance(map);
+          map.setProjection({ type: projection });
+          if (onLoad) {
+            onLoad(map)
+          }
+        }
       });
 
       return () => {
@@ -59,10 +63,30 @@ const Map = ({
         setMapInstance(null);
       };
     }
-  }, [mapStyle]);
+  }, []);
+
+  useEffect(() => {
+    if (mapInstance && mapStyle) {
+      mapInstance.setStyle(mapStyle);
+      mapInstance.once('styledata', () => {
+        mapInstance.setProjection({ type: projection });
+      });
+    }
+  }, [mapInstance, mapStyle]);
+
+  useEffect(() => {
+    if (mapInstance) {
+      mapInstance.setProjection({ type: projection });
+    }
+  }, [mapInstance, projection]);
+
 
   return (
-    <div ref={mapContainerRef} style={style} className={containerClass} >
+    <div
+      ref={mapContainerRef}
+      style={style}
+      className={`${containerClass} ${projection === 'globe' ? 'globe-background' : 'bg-blue-50'}`}
+    >
       {mapInstance && <MapProvider value={mapInstance}>{children}</MapProvider>}
     </div>
   );

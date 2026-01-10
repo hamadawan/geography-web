@@ -60,6 +60,8 @@ export const SITE_CONFIG = {
 
     // Map Defaults
     map: {
+        defaultZoom: 2,
+        defaultCenter: [-97.6, 38.3] as [number, number],
         layerStyles: {
             'all-countries': {
                 fillColor: "#3b82f6",
@@ -121,6 +123,32 @@ export const SITE_CONFIG = {
             borderOpacity: 0.5,
             borderWidth: 1,
             borderColor: "#000000",
+        },
+        styles: {
+            standard: {
+                label: "Standard",
+                url: "https://tiles.openfreemap.org/styles/liberty",
+            },
+            light: {
+                label: "Light",
+                url: "https://tiles.openfreemap.org/styles/positron",
+            },
+            dark: {
+                label: "Dark",
+                url: "https://tiles.openfreemap.org/styles/dark",
+            },
+            outdoor: {
+                label: "Outdoor",
+                url: "https://tiles.openfreemap.org/styles/bright",
+            },
+            satellite: {
+                label: "Satellite",
+                url: "https://api.maptiler.com/maps/hybrid/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL", // Placeholder/Demo key
+            }
+        },
+        projections: {
+            globe: "globe",
+            mercator: "mercator",
         }
     }
 };

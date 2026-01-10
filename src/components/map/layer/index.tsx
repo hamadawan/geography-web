@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMap } from '../context';
 import { LayerSpecification, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 
@@ -12,26 +12,41 @@ type LayerProps = LayerSpecification & {
 
 const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) => {
   const map = useMap();
+  const geoJsonDataRef = useRef(geoJsonData);
+
+  useEffect(() => {
+    geoJsonDataRef.current = geoJsonData;
+  }, [geoJsonData]);
 
   useEffect(() => {
     if (!map || !source) return;
 
-    if (!map.getSource(source)) {
-      map.addSource(source, {
-        type: 'geojson',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: geoJsonData as any,
-      });
-    }
+    const addSource = () => {
+      if (!map.getSource(source)) {
+        map.addSource(source, {
+          type: 'geojson',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data: geoJsonDataRef.current as any,
+        });
+      }
+    };
+
+    addSource();
+    map.on('styledata', addSource);
 
     return () => {
-      if (map.getSource(source)) {
-        // Only remove if no other layers are using it
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const layersUsingSource = map.getStyle().layers?.filter((l) => (l as any).source === source) || [];
-        if (layersUsingSource.length === 0) {
-          map.removeSource(source);
+      map.off('styledata', addSource);
+      try {
+        if (map && map.getStyle() && map.getSource(source)) {
+          // Only remove if no other layers are using it
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const layersUsingSource = map.getStyle().layers?.filter((l) => (l as any).source === source) || [];
+          if (layersUsingSource.length === 0) {
+            map.removeSource(source);
+          }
         }
+      } catch (e) {
+        console.warn('Error cleaning up map source:', e);
       }
     };
   }, [map, source]);
@@ -48,21 +63,31 @@ const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) =>
   useEffect(() => {
     if (!map || !id || !source) return;
 
-    if (!map.getLayer(id)) {
-      map.addLayer({
-        id,
-        type,
-        source,
-        paint,
-      } as LayerSpecification);
-    }
-
-    return () => {
-      if (map.getLayer(id)) {
-        map.removeLayer(id);
+    const addLayer = () => {
+      if (!map.getLayer(id) && map.getSource(source)) {
+        map.addLayer({
+          id,
+          type,
+          source,
+          paint,
+        } as LayerSpecification);
       }
     };
-  }, [map, id, source, type]);
+
+    addLayer();
+    map.on('styledata', addLayer);
+
+    return () => {
+      map.off('styledata', addLayer);
+      try {
+        if (map && map.getStyle() && map.getLayer(id)) {
+          map.removeLayer(id);
+        }
+      } catch (e) {
+        console.warn('Error cleaning up map layer:', e);
+      }
+    };
+  }, [map, id, source, type, paint]);
 
   // Layer property updates
   useEffect(() => {

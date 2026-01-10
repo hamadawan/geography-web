@@ -12,6 +12,8 @@ import { SITE_CONFIG } from "@/lib/constants/site";
 
 import { Layer as LayerType } from "@/lib/store/layer-store";
 import { useMainMap } from "./use-main-map";
+import { MapControls } from "../map-controls";
+import { useState } from "react";
 
 interface MainMapProps {
   items: any[] | null;
@@ -44,8 +46,11 @@ const MainMap = ({
     currentLayerPaint,
     currentBorderPaint,
     loadedImages,
-    handleMapLoad, // This handleMapLoad comes from the hook
-  } = useMainMap({ items, layerType, onMapLoad }); // Pass props to the hook
+    handleMapLoad,
+  } = useMainMap({ items, layerType, onMapLoad });
+
+  const [currentProjection, setCurrentProjection] = useState(SITE_CONFIG.map.projections.mercator);
+  const [currentStyle, setCurrentStyle] = useState(SITE_CONFIG.map.styles.standard.url);
 
   const renderCurrentLayer = useMemo(() => {
     if (!geoJsonData) return null;
@@ -153,11 +158,19 @@ const MainMap = ({
       </Button>
       <Map
         containerClass={"h-screen w-100 relative"}
-        zoom={4}
-        center={[-97.6, 38.3]}
+        zoom={SITE_CONFIG.map.defaultZoom}
+        center={SITE_CONFIG.map.defaultCenter}
         onLoad={handleMapLoad}
+        mapStyle={currentStyle}
+        projection={currentProjection}
       >
         {loading && <Loading />}
+        <MapControls
+          currentProjection={currentProjection}
+          onProjectionChange={setCurrentProjection}
+          currentStyle={currentStyle}
+          onStyleChange={setCurrentStyle}
+        />
         {renderCurrentLayer}
         {renderSavedLayers}
         {children}
