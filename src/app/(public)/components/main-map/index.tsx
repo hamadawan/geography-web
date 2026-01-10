@@ -14,6 +14,8 @@ import { Layer as LayerType } from "@/lib/store/layer-store";
 import { useMainMap } from "./use-main-map";
 import { MapControls } from "../map-controls";
 import { useState } from "react";
+import centroid from "@turf/centroid";
+import { AllGeoJSON } from "@turf/helpers";
 
 interface MainMapProps {
   items: any[] | null;
@@ -124,6 +126,34 @@ const MainMap = ({
               onClick={() => {
                 setSelectedLayer(layer.id);
                 if (!isSidebarOpen) toggleSidebar();
+              }}
+            />
+          )}
+          {layer.label && (
+            <Layer
+              id={`${layer.id}-label`}
+              source={`${layer.id}-label-source`}
+              geoJsonData={centroid(layer.geoJsonData as AllGeoJSON)}
+              type="symbol"
+              layout={{
+                'text-field': layer.label,
+                'text-size': layer.textSize || 12,
+                'text-anchor': 'center',
+                ...Object.keys(layer.customLabelStyles || {}).reduce((acc, key) => {
+                  if (key.startsWith('text-') && !['text-color', 'text-halo-color'].includes(key)) {
+                    acc[key] = layer.customLabelStyles![key];
+                  }
+                  return acc;
+                }, {} as Record<string, any>)
+              }}
+              paint={{
+                'text-color': layer.textColor || '#000000',
+                ...Object.keys(layer.customLabelStyles || {}).reduce((acc, key) => {
+                  if (['text-color', 'text-halo-color', 'text-halo-width', 'text-halo-blur'].includes(key)) {
+                    acc[key] = layer.customLabelStyles![key];
+                  }
+                  return acc;
+                }, {} as Record<string, any>)
               }}
             />
           )}

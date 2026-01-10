@@ -10,7 +10,7 @@ type LayerProps = LayerSpecification & {
   onClick?: (e: MapLayerMouseEvent) => void
 }
 
-const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) => {
+const Layer = ({ id, geoJsonData, source, paint, layout, type, onClick }: LayerProps) => {
   const map = useMap();
   const geoJsonDataRef = useRef(geoJsonData);
 
@@ -65,12 +65,23 @@ const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) =>
 
     const addLayer = () => {
       if (!map.getLayer(id) && map.getSource(source)) {
-        map.addLayer({
+        const layerOptions: LayerSpecification = {
           id,
           type,
           source,
-          paint,
-        } as LayerSpecification);
+        } as LayerSpecification;
+
+        if (paint) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (layerOptions as any).paint = paint;
+        }
+
+        if (layout) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (layerOptions as any).layout = layout;
+        }
+
+        map.addLayer(layerOptions);
       }
     };
 
@@ -87,9 +98,18 @@ const Layer = ({ id, geoJsonData, source, paint, type, onClick }: LayerProps) =>
         console.warn('Error cleaning up map layer:', e);
       }
     };
-  }, [map, id, source, type, paint]);
+  }, [map, id, source, type, paint, layout]);
 
-  // Layer property updates
+  // Layer layout property updates
+  useEffect(() => {
+    if (!map || !id || !map.getLayer(id)) return;
+    if (layout) {
+      Object.entries(layout).forEach(([key, value]) => {
+        map.setLayoutProperty(id, key, value);
+      });
+    }
+  }, [map, id, layout]);
+
   useEffect(() => {
     if (!map || !id || !map.getLayer(id)) return;
     if (paint) {

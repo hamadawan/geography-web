@@ -5,14 +5,54 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useLayerStore } from "@/lib/store/layer-store";
-import { X, Paintbrush, Square, Type, MousePointer2, Image as ImageIcon } from "lucide-react";
+import { X, Paintbrush, Square, Type, MousePointer2, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const StylingSidebar = () => {
     const { layers, selectedLayerId, updateLayer, setSelectedLayer, isSidebarOpen } = useLayerStore();
 
     const selectedLayer = layers.find(l => l.id === selectedLayerId);
+    const [newStyleKey, setNewStyleKey] = useState<string>("");
+    const [newStyleValue, setNewStyleValue] = useState<string>("");
+
+    const availableStyleProperties = [
+        "text-transform",
+        "text-letter-spacing",
+        "text-line-height",
+        "text-max-width",
+        "text-font",
+        "text-justify",
+        "text-anchor",
+        "text-rotate",
+        "text-halo-color",
+        "text-halo-width",
+        "text-halo-blur",
+    ];
+
+    const handleAddStyle = () => {
+        if (selectedLayer && newStyleKey && newStyleValue) {
+            const currentStyles = selectedLayer.customLabelStyles || {};
+            updateLayer(selectedLayer.id, {
+                customLabelStyles: {
+                    ...currentStyles,
+                    [newStyleKey]: newStyleValue
+                }
+            });
+            setNewStyleKey("");
+            setNewStyleValue("");
+        }
+    };
+
+    const handleRemoveStyle = (key: string) => {
+        if (selectedLayer && selectedLayer.customLabelStyles) {
+            const newStyles = { ...selectedLayer.customLabelStyles };
+            delete newStyles[key];
+            updateLayer(selectedLayer.id, { customLabelStyles: newStyles });
+        }
+    };
 
     return (
         <div
@@ -37,9 +77,9 @@ const StylingSidebar = () => {
                     </Button>
                 </div>
 
-                <div className="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="p-3 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                     {selectedLayer ? (
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {/* Layer Name Section */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -57,11 +97,119 @@ const StylingSidebar = () => {
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="layer-label" className="text-[11px] font-medium ml-1">Label Text</Label>
+                                    <Input
+                                        id="layer-label"
+                                        value={selectedLayer.label || ''}
+                                        onChange={(e) => updateLayer(selectedLayer.id, { label: e.target.value })}
+                                        className="h-9 bg-muted/20 border-muted-foreground/20 focus:border-primary/50 transition-all text-sm"
+                                        placeholder="Enter label text..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="text-size" className="text-[11px] font-medium ml-1">Size</Label>
+                                        <div className="flex items-center gap-2 bg-muted/20 rounded-md border border-muted-foreground/20 px-2 h-9">
+                                            <input
+                                                id="text-size"
+                                                type="number"
+                                                min="8"
+                                                max="72"
+                                                step="1"
+                                                value={selectedLayer.textSize || 12}
+                                                onChange={(e) => updateLayer(selectedLayer.id, { textSize: parseFloat(e.target.value) })}
+                                                className="bg-transparent border-none outline-none text-xs w-full font-medium"
+                                            />
+                                            <span className="text-[10px] text-muted-foreground font-bold">PX</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="text-color" className="text-[11px] font-medium ml-1">Color</Label>
+                                        <div className="flex items-center gap-2 bg-muted/20 rounded-md border border-muted-foreground/20 p-1 h-9">
+                                            <div
+                                                className="w-6 h-6 rounded-sm border border-black/10 relative overflow-hidden shrink-0"
+                                                style={{ backgroundColor: selectedLayer.textColor || '#000000' }}
+                                            >
+                                                <input
+                                                    type="color"
+                                                    value={selectedLayer.textColor || '#000000'}
+                                                    onChange={(e) => updateLayer(selectedLayer.id, { textColor: e.target.value })}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full scale-150"
+                                                />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={selectedLayer.textColor || '#000000'}
+                                                onChange={(e) => updateLayer(selectedLayer.id, { textColor: e.target.value })}
+                                                className="bg-transparent border-none outline-none text-[11px] font-mono w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <Select value={newStyleKey} onValueChange={setNewStyleKey}>
+                                            <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="Select property" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableStyleProperties.map(prop => (
+                                                    <SelectItem key={prop} value={prop} className="text-xs">
+                                                        {prop}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex-1">
+                                        <Input
+                                            value={newStyleValue}
+                                            onChange={(e) => setNewStyleValue(e.target.value)}
+                                            placeholder="Value"
+                                            className="h-8 text-xs"
+                                        />
+                                    </div>
+                                    <Button
+                                        size="icon"
+                                        variant="secondary"
+                                        className="h-8 w-8 shrink-0"
+                                        onClick={handleAddStyle}
+                                        disabled={!newStyleKey || !newStyleValue}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+
+                                {selectedLayer.customLabelStyles && Object.keys(selectedLayer.customLabelStyles).length > 0 && (
+                                    <div className="space-y-2 bg-muted/20 rounded-md p-2">
+                                        {Object.entries(selectedLayer.customLabelStyles).map(([key, value]) => (
+                                            <div key={key} className="flex items-center justify-between gap-2 text-xs group">
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <span className="font-medium text-muted-foreground shrink-0">{key}:</span>
+                                                    <span className="truncate" title={String(value)}>{String(value)}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveStyle(key)}
+                                                    className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             <Separator className="bg-muted-foreground/10" />
 
                             {/* Fill Style Section */}
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Paintbrush className="h-3.5 w-3.5" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">Fill Style</span>
@@ -115,7 +263,7 @@ const StylingSidebar = () => {
                             <Separator className="bg-muted-foreground/10" />
 
                             {/* Image Fill Section */}
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <ImageIcon className="h-3.5 w-3.5" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">Image Fill</span>
@@ -193,7 +341,7 @@ const StylingSidebar = () => {
                             <Separator className="bg-muted-foreground/10" />
 
                             {/* Border Style Section */}
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Square className="h-3.5 w-3.5" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">Border Style</span>
