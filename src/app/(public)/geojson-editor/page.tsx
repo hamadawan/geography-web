@@ -19,13 +19,10 @@ const GeoJSONEditorPage = () => {
 
     return (
         <MapLayout>
-            {({ currentItems, loading, mapInstance, setMapInstance, layerType }) => (
+            {({ mapInstance, setMapInstance }) => (
                 <div className="flex-1 flex overflow-hidden">
                     <MainMap
-                        items={currentItems}
-                        loading={loading}
                         onMapLoad={setMapInstance}
-                        layerType={layerType}
                         className="flex-1"
                         rightSidebarWidth={450}
                     />

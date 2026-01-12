@@ -25,7 +25,6 @@ interface SelectionStore {
     setSelectedCountry: (country: Option | null) => void;
     setSelectedState: (state: Option | null) => void;
     setSelectedZip: (zip: Option | null) => void;
-    setCurrentItems: (items: any[]) => void;
     setLayerType: (type: LayerType) => void;
 
     // Data actions
@@ -71,7 +70,6 @@ export const useSelectionStore = create<SelectionStore>((set) => ({
         selectedZip: zip,
         layerType: zip?.code === 'all' ? 'all-zipcodes' : 'zipcode'
     }),
-    setCurrentItems: (items) => set({ currentItems: items }),
     setLayerType: (type) => set({ layerType: type }),
 
     setCountries: (countries) => set({ countries }),
