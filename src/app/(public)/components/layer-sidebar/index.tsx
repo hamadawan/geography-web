@@ -4,12 +4,12 @@ import React from "react";
 import { useLayerStore } from "@/lib/store/layer-store";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Eye, EyeOff, Trash2, Layers, Download, Upload } from "lucide-react";
+import { Eye, EyeOff, Trash2, Layers, Download, Upload, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLayerSidebar } from "./use-layer-sidebar";
 
 const LayerSidebar = () => {
-    const { layers, selectedLayerId, removeLayer, setSelectedLayer, toggleVisibility, isSidebarOpen } = useLayerStore();
+    const { layers, selectedLayerId, removeLayer, setSelectedLayer, toggleVisibility, isSidebarOpen, setAddLayerModalOpen } = useLayerStore();
     const { handleExport, handleImport, triggerImport, fileInputRef, canExport } = useLayerSidebar();
 
     return (
@@ -26,6 +26,15 @@ const LayerSidebar = () => {
                         <h2 className="font-semibold">Map Layers</h2>
                     </div>
                     <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => setAddLayerModalOpen(true)}
+                            title="Add Layer"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -58,9 +67,22 @@ const LayerSidebar = () => {
                 <ScrollArea className="flex-1">
                     <div className="p-4 space-y-2">
                         {layers.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <p className="text-sm">No layers created yet.</p>
-                                <p className="text-xs">Please select a country, state, or zip code and click on boundary to add a layer.</p>
+                            <div className="text-center py-12 px-4 flex flex-col items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                    <Layers className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium">No layers created yet</p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2 gap-2"
+                                    onClick={() => setAddLayerModalOpen(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Add Layer
+                                </Button>
                             </div>
                         ) : (
                             layers.map((layer) => (

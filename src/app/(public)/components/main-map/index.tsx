@@ -18,22 +18,18 @@ import centroid from "@turf/centroid";
 import { AllGeoJSON } from "@turf/helpers";
 
 interface MainMapProps {
-  items: any[] | null;
   loading?: boolean;
   className?: string;
   onMapLoad?: (map: any) => void;
-  layerType?: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
   rightSidebarWidth?: number;
   children?: React.ReactNode;
 }
 
 
 const MainMap = ({
-  items,
   loading,
   className = "",
   onMapLoad,
-  layerType = 'all-countries',
   rightSidebarWidth = 0,
   children,
 }: MainMapProps) => {
@@ -43,44 +39,12 @@ const MainMap = ({
     toggleSidebar,
     setSelectedLayer,
     selectedLayerId,
-    geoJsonData,
-    handleMapClick,
-    currentLayerPaint,
-    currentBorderPaint,
     loadedImages,
     handleMapLoad,
-  } = useMainMap({ items, layerType, onMapLoad });
+  } = useMainMap({ onMapLoad });
 
   const [currentProjection, setCurrentProjection] = useState(SITE_CONFIG.map.projections.mercator);
   const [currentStyle, setCurrentStyle] = useState(SITE_CONFIG.map.styles.standard.url);
-
-  const renderCurrentLayer = useMemo(() => {
-    if (!geoJsonData) return null;
-
-    const sourceId = `current-${layerType}-source`;
-    const layerId = `current-${layerType}-layer`;
-    const borderId = `current-${layerType}-border`;
-
-    return (
-      <React.Fragment key={`current-${layerType}`}>
-        <Layer
-          id={layerId}
-          source={sourceId}
-          geoJsonData={geoJsonData}
-          type="fill"
-          paint={currentLayerPaint}
-          onClick={handleMapClick}
-        />
-        <Layer
-          id={borderId}
-          source={sourceId}
-          geoJsonData={geoJsonData}
-          type="line"
-          paint={currentBorderPaint}
-        />
-      </React.Fragment>
-    );
-  }, [geoJsonData, layerType, currentLayerPaint, currentBorderPaint, handleMapClick]);
 
   const renderSavedLayers = useMemo(() => {
     return layers.map((layer: LayerType) => {
@@ -172,7 +136,7 @@ const MainMap = ({
       <Button
         onClick={toggleSidebar}
         variant="secondary"
-        className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-50 bg-white hover:bg-white/90 text-black"
+        className="rounded-full flex items-center gap-2 shadow-lg absolute top-4 left-4 z-40 bg-white hover:bg-white/90 text-black"
       >
         {isSidebarOpen ? (
           <>
@@ -201,7 +165,6 @@ const MainMap = ({
           currentStyle={currentStyle}
           onStyleChange={setCurrentStyle}
         />
-        {renderCurrentLayer}
         {renderSavedLayers}
         {children}
         <Marker position={[-97.8, 38.3]}>

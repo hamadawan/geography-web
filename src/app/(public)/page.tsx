@@ -6,12 +6,10 @@ import MapLayout from "./components/map-layout";
 const App = () => {
   return (
     <MapLayout>
-      {({ currentItems, loading, setMapInstance, layerType }) => (
+      {({ setMapInstance }) => (
         <MainMap
-          items={currentItems}
-          loading={loading}
+          loading={false}
           onMapLoad={setMapInstance}
-          layerType={layerType}
         />
       )}
     </MapLayout>

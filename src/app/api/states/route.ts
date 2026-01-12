@@ -10,7 +10,11 @@ export async function GET(request: NextRequest) {
         const paginate = searchParams.get('paginate') !== 'false';
 
         const states = await findAll(page, limit, country, paginate);
-        return NextResponse.json(states);
+        return NextResponse.json(states, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600',
+            },
+        });
     } catch (error) {
         console.error('Error fetching states:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

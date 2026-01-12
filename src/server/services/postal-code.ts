@@ -2,61 +2,75 @@
 import 'server-only';
 import prisma from '../db';
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 
-export const findAll = async (page: number = 1, limit: number = 10, stateCode?: string, paginate: boolean = true) => {
-    const pageNum = parseInt(String(page), 10) || 1;
-    const limitNum = parseInt(String(limit), 10) || 10;
-    const offset = (pageNum - 1) * limitNum;
+export const findAll = (page: number = 1, limit: number = 10, stateCode?: string, paginate: boolean = true, search: string = '') => unstable_cache(
+    async () => {
+        const pageNum = parseInt(String(page), 10) || 1;
+        const limitNum = parseInt(String(limit), 10) || 10;
+        const offset = (pageNum - 1) * limitNum;
 
-    const whereClause = stateCode
-        ? (Prisma as any).sql`WHERE physical_state = ${stateCode}`
-        : (Prisma as any).empty;
+        const whereClause = stateCode
+            ? (Prisma as any).sql`WHERE physical_state = ${stateCode}`
+            : (Prisma as any).empty;
 
-    const paginationClause = paginate
-        ? (Prisma as any).sql`LIMIT ${limitNum}::int OFFSET ${offset}::int`
-        : (Prisma as any).empty;
+        const searchClause = search
+            ? (Prisma as any).sql`${stateCode ? (Prisma as any).sql`AND` : (Prisma as any).sql`WHERE`} code ILIKE ${`%${search}%`}`
+            : (Prisma as any).empty;
 
-    const postalCodes: any[] = await prisma.$queryRaw`
-    SELECT id, code, country_code, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
-    FROM postal_code 
-    ${whereClause}
-    ORDER BY code
-    ${paginationClause}`;
+        const paginationClause = paginate
+            ? (Prisma as any).sql`LIMIT ${limitNum}::int OFFSET ${offset}::int`
+            : (Prisma as any).empty;
 
-    const parsedPostalCodes = postalCodes.map(pc => ({
-        ...pc,
-        geom_simplified: pc.geom_simplified ? JSON.parse(pc.geom_simplified) : null
-    }));
+        const postalCodes: any[] = await prisma.$queryRaw`
+        SELECT id, code, country_code, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+        FROM postal_code 
+        ${whereClause}
+        ${searchClause}
+        ORDER BY code
+        ${paginationClause}`;
 
-    if (!paginate) {
+        const parsedPostalCodes = postalCodes.map(pc => ({
+            ...pc,
+            geom_simplified: pc.geom_simplified ? JSON.parse(pc.geom_simplified) : null
+        }));
+
+        if (!paginate) {
+            return {
+                postalCodes: parsedPostalCodes,
+                total: parsedPostalCodes.length,
+            };
+        }
+
+        const totalPostalCodes: any[] = await prisma.$queryRaw`
+        SELECT COUNT(*) as count FROM postal_code ${whereClause} ${searchClause}`;
+
         return {
             postalCodes: parsedPostalCodes,
-            total: parsedPostalCodes.length,
+            total: Number(totalPostalCodes[0].count),
+            page: pageNum,
+            limit: limitNum,
         };
-    }
+    },
+    [`postal-codes-${stateCode || 'all'}-${page}-${limit}-${paginate}-${search}`],
+    { revalidate: 86400, tags: ['postal-codes', stateCode ? `postal-codes-${stateCode}` : 'postal-codes-all'] }
+)();
 
-    const totalPostalCodes: any[] = await prisma.$queryRaw`
-    SELECT COUNT(*) as count FROM postal_code ${whereClause}`;
+export const findOne = (code: string) => unstable_cache(
+    async () => {
+        const result: any[] = await prisma.$queryRaw`
+        SELECT id, code, country_code, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
+        FROM postal_code 
+        WHERE code = ${code}`;
 
-    return {
-        postalCodes: parsedPostalCodes,
-        total: Number(totalPostalCodes[0].count),
-        page: pageNum,
-        limit: limitNum,
-    };
-};
-
-export const findOne = async (code: string) => {
-    const result: any[] = await prisma.$queryRaw`
-    SELECT id, code, country_code, bbox, ST_AsGeoJSON(geom_simplified) as geom_simplified 
-    FROM postal_code 
-    WHERE code = ${code}`;
-
-    return result.map(pc => ({
-        ...pc,
-        geom_simplified: pc.geom_simplified ? JSON.parse(pc.geom_simplified) : null
-    }));
-};
+        return result.map(pc => ({
+            ...pc,
+            geom_simplified: pc.geom_simplified ? JSON.parse(pc.geom_simplified) : null
+        }));
+    },
+    [`postal-code-${code}`],
+    { revalidate: 86400, tags: ['postal-codes', `postal-code-${code}`] }
+)();
 
 export const create = async (data: any) => {
     return prisma.$queryRaw`

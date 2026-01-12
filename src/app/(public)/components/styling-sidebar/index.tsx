@@ -61,7 +61,7 @@ const StylingSidebar = () => {
                 (selectedLayerId && isSidebarOpen) ? "w-[320px] opacity-100" : "w-0 opacity-0 border-r-0"
             )}
         >
-            <div className="flex-1 min-w-[320px] flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-y-hidden">
                 <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Paintbrush className="h-4 w-4 text-primary" />

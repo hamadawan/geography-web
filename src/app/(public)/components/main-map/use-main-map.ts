@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useCallback, useRef, useEffect, useState } from "react";
 import { useLayerStore } from "@/lib/store/layer-store";
+import { useSelectionStore } from "@/lib/store/selection-store";
 import { SITE_CONFIG } from "@/lib/constants/site";
 
 interface UseMainMapProps {
-    items: any[] | null;
-    layerType: 'all-countries' | 'country' | 'all-states' | 'state' | 'all-zipcodes' | 'zipcode';
     onMapLoad?: (map: any) => void;
 }
 
-export const useMainMap = ({ items, layerType, onMapLoad }: UseMainMapProps) => {
+export const useMainMap = ({ onMapLoad }: UseMainMapProps) => {
     const { layers, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer, selectedLayerId } = useLayerStore();
+    const { currentItems: items, layerType } = useSelectionStore();
     const mapRef = useRef<any>(null);
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
     const loadedUrlsRef = useRef<Record<string, string>>({});
@@ -33,14 +33,11 @@ export const useMainMap = ({ items, layerType, onMapLoad }: UseMainMapProps) => 
                 : item.geom_simplified;
 
             const entityId = `${baseType}:${item.country_code ? item.country_code + ':' : ''}${item.code}`;
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { geom_simplified: _geom_simplified, geom: _geom, ...restProps } = item;
-
+            ['geom_simplified', 'geom'].forEach(key => delete item[key]);
             features.push({
                 type: "Feature",
                 properties: {
-                    ...restProps,
+                    ...item,
                     entityId,
                     savedLayerType: baseType,
                 },
@@ -97,7 +94,7 @@ export const useMainMap = ({ items, layerType, onMapLoad }: UseMainMapProps) => 
     }, [geoJsonData, addLayer, isSidebarOpen, toggleSidebar, setSelectedLayer]);
 
     const currentLayerPaint = useMemo(() => {
-        const style = SITE_CONFIG.map.layerStyles[layerType];
+        const style = SITE_CONFIG.map.layerStyles[layerType as keyof typeof SITE_CONFIG.map.layerStyles];
         const defaultFillColor = style.fillColor;
         return {
             "fill-color": defaultFillColor,
@@ -116,7 +113,6 @@ export const useMainMap = ({ items, layerType, onMapLoad }: UseMainMapProps) => 
         if (!mapRef.current) return;
         const map = mapRef.current;
 
-        // Only process layers that have a fillImage
         const layersWithImages = layers.filter(l => l.fillImage);
 
         layersWithImages.forEach((layer) => {

@@ -1,31 +1,23 @@
 "use client";
 
-import { Map, Code } from "lucide-react";
+import { Map, Code, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-import { CountrySelect } from "../country-select";
-import { StateSelect } from "../state-select";
-import { ZipcodeSelect } from "../zipcode-select";
+import { AddLayerModal } from "@/app/(public)/components/add-layer-modal";
+import { useLayerStore } from "@/lib/store/layer-store";
 
-import { useSelectionStore } from "@/lib/store/selection-store";
 import { Separator } from "@/components/ui/separator"; // Added missing import for Separator
 
 interface HeaderProps {
   showSelectors?: boolean;
+  showAddLayerButton?: boolean;
 }
 
-export default function Header({ showSelectors = true }: HeaderProps) {
+export default function Header({ showSelectors = true, showAddLayerButton = false }: HeaderProps) {
   const pathname = usePathname();
-  const {
-    selectedCountry,
-    selectedState,
-    selectedZip,
-    setSelectedCountry,
-    setSelectedState,
-    setSelectedZip,
-  } = useSelectionStore();
+  const { isAddLayerModalOpen, setAddLayerModalOpen } = useLayerStore();
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4">
@@ -39,23 +31,31 @@ export default function Header({ showSelectors = true }: HeaderProps) {
       <div className="flex flex-1 items-center gap-3">
         {showSelectors && (
           <>
-            <CountrySelect
-              value={selectedCountry ?? undefined}
-              onChange={setSelectedCountry}
-            />
-
-            <StateSelect
-              countryCode={selectedCountry?.code}
-              value={selectedState ?? undefined}
-              onChange={setSelectedState}
-            />
-
-            <ZipcodeSelect
-              stateCode={selectedState?.code}
-              value={selectedZip ?? undefined}
-              onChange={setSelectedZip}
-            />
+            {showAddLayerButton && (
+              <>
+                <Button
+                  onClick={() => setAddLayerModalOpen(true)}
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Layer
+                </Button>
+              </>
+            )}
           </>
+        )}
+        {!showSelectors && showAddLayerButton && (
+          <Button
+            onClick={() => setAddLayerModalOpen(true)}
+            variant="default"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Layer
+          </Button>
         )}
       </div>
 
@@ -69,6 +69,10 @@ export default function Header({ showSelectors = true }: HeaderProps) {
           </Link>
         )}
       </div>
+      <AddLayerModal
+        open={isAddLayerModalOpen}
+        onOpenChange={setAddLayerModalOpen}
+      />
     </header>
   );
 }
